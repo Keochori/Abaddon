@@ -1,22 +1,26 @@
 #include <windows.h>
-//#include "Tools/Input.h"
 #include <iostream>
-//#include "Graphics.h"
-//#include "Tools/Timer.h"
 #include "../Resources/resource.h"
+
+#pragma warning(disable : 28251)
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
+FILE* CreateConsole()
 {
-	// Create console
+	FILE* consoleStream;
 	AllocConsole();
-	freopen("CONIN$", "r", stdin);
-	freopen("CONOUT$", "w", stdout);
-	freopen("CONOUT$", "w", stderr);
+	freopen_s(&consoleStream, "CONIN$", "r", stdin);
+	freopen_s(&consoleStream, "CONOUT$", "w", stdout);
+	freopen_s(&consoleStream, "CONOUT$", "w", stderr);
 
-	// Register the window class.
-	const wchar_t CLASS_NAME[] = L"Grave";
+	std::cout << "Console successfully initiated." << std::endl;
+
+	return consoleStream;
+}
+
+void CreateAndRegisterWindowClass(HINSTANCE& hInstance, LPCWSTR className)
+{
+	LPCWSTR CLASS_NAME = className;
 
 	WNDCLASS wc = { };
 
@@ -26,12 +30,22 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 	wc.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON2));
 
 	RegisterClass(&wc);
+}
+
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
+{
+	// Create console
+	FILE* consoleStream = CreateConsole();
+
+	// Register the window class.
+	LPCWSTR className = L"Abaddon";
+	CreateAndRegisterWindowClass(hInstance, className);
 
 	// Create the window.
-
+#pragma region CreateWindow
 	HWND hwnd = CreateWindowEx(
 		0,                              // Optional window styles.
-		CLASS_NAME,                     // Window class
+		className,                     // Window class
 		L"Abaddon",    // Window text
 		WS_OVERLAPPEDWINDOW,            // Window style
 
@@ -48,13 +62,13 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 	{
 		return 0;
 	}
+#pragma endregion
 
 	ShowWindow(hwnd, nCmdShow);
 
 	// Loop
 	bool running = true;
 	MSG msg = { };
-	int angle = 0;
 	while (running)
 	{
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
@@ -64,11 +78,14 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
 			if (msg.message == WM_QUIT)
 			{
+				// End program
+				consoleStream = nullptr;
+				delete consoleStream;
+
 				running = false;
 			}
 		}
 	}
-
 
 	return 0;
 }

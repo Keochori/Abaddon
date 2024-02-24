@@ -17,6 +17,7 @@ project "Abaddon"
     }
 
     files {
+        "%{prj.name}/Resources/*",
         "%{prj.name}/src/**.cpp",
         "%{prj.name}/src/**.h"
     }

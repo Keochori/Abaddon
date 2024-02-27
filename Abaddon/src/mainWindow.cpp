@@ -1,8 +1,11 @@
+#include "pch.h"
 #include <windows.h>
 #include <iostream>
 #include "../Resources/resource.h"
+#include "Graphics/Graphics.h"
 
 #pragma warning(disable : 28251)
+
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 FILE* CreateConsole()
@@ -13,7 +16,7 @@ FILE* CreateConsole()
 	freopen_s(&consoleStream, "CONOUT$", "w", stdout);
 	freopen_s(&consoleStream, "CONOUT$", "w", stderr);
 
-	std::cout << "Console successfully initiated." << std::endl;
+	LOG_SUCCESS("Console successfully initiated.");
 
 	return consoleStream;
 }
@@ -60,11 +63,18 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
 	if (hwnd == NULL)
 	{
+		LOG_ERROR("Failed to create window");
+		assert(false);
 		return 0;
 	}
 #pragma endregion
 
 	ShowWindow(hwnd, nCmdShow);
+
+	// Init graphics class
+	Graphics graphics;
+	float clearColor[4] = { 0.3f,0.4f,0.6f,1.0f };
+	graphics.Init(hwnd, clearColor);
 
 	// Loop
 	bool running = true;
@@ -85,6 +95,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 				running = false;
 			}
 		}
+
+		// Game loop
+		graphics.Update();
+		graphics.EndFrame();
 	}
 
 	return 0;
@@ -103,9 +117,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(hwnd, &ps);
 
-			// All painting occurs here, between BeginPaint and EndPaint.
-
-			FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 5));
+			FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 2));
 
 			EndPaint(hwnd, &ps);
 		}

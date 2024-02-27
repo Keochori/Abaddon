@@ -4,7 +4,8 @@ workspace "Abaddon"
     configurations
     {
         "Debug",
-        "Release"
+        "Release",
+        "Dist"
     }
 
 project "Abaddon"
@@ -12,14 +13,24 @@ project "Abaddon"
     kind "WindowedApp"
     language "C++"
 
+    pchheader "pch.h"
+	pchsource "Abaddon/src/pch.cpp"
+    
     defines {
         "UNICODE"
     }
-
+    
+    links {
+        "d3d11.lib",
+        "D3DCompiler.lib"
+    }
+    
     files {
         "%{prj.name}/Resources/*",
         "%{prj.name}/src/**.cpp",
-        "%{prj.name}/src/**.h"
+        "%{prj.name}/src/**.hpp",
+        "%{prj.name}/src/**.h",
+        "%{prj.name}/src/**.hlsl"
     }
 
     includedirs {
@@ -28,3 +39,28 @@ project "Abaddon"
 
     targetdir ("bin/%{cfg.buildcfg}")
 	objdir ("bin-int/%{cfg.buildcfg}")
+
+    -- Shader options
+    shaderobjectfileoutput ("%%(Filename).cso")
+
+    filter("files:**_vs.hlsl")
+    shadertype("Vertex")
+    
+    filter("files:**_ps.hlsl")
+    shadertype("Pixel")
+    -----------------------
+
+    filter "configurations:Debug"
+        defines "DEBUG"
+        runtime "Debug"
+        symbols "on"
+
+    filter "configurations:Release"
+        defines "RELEASE"
+        runtime "Release"
+        optimize "on"
+
+    filter "configurations:Dist"
+        defines "DIST"
+        runtime "Release"
+        optimize "on"

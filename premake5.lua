@@ -12,10 +12,17 @@ project "Abaddon"
     location "Abaddon"
     kind "WindowedApp"
     language "C++"
+    cppdialect "C++20"
 
     pchheader "pch.h"
 	pchsource "Abaddon/src/pch.cpp"
     
+    TargetDir = "bin/%{cfg.buildcfg}"
+    ObjectDir = "bin-int/%{cfg.buildcfg}"
+    
+    targetdir (TargetDir)
+    objdir (ObjectDir)
+
     defines {
         "UNICODE"
     }
@@ -37,11 +44,8 @@ project "Abaddon"
         "%{prj.name}/src"
     }
 
-    targetdir ("bin/%{cfg.buildcfg}")
-	objdir ("bin-int/%{cfg.buildcfg}")
-
     -- Shader options
-    shaderobjectfileoutput ("%%(Filename).cso")
+    shaderobjectfileoutput ("../Assets/Shaders/%%(Filename).cso")
 
     filter("files:**_vs.hlsl")
     shadertype("Vertex")

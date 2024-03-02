@@ -4,7 +4,6 @@
 
 #include "Vertex.h"
 
-
 Graphics::Graphics()
 {
 }
@@ -159,7 +158,7 @@ void Graphics::CreateAndSetVertexShader(std::string aShaderFileName)
 {
 	ComPtr<ID3DBlob> blob;
 	ComPtr<ID3D11VertexShader> vertexShader;
-	D3DReadFileToBlob(std::wstring(aShaderFileName.begin(), aShaderFileName.end()).c_str(), &blob);
+	D3DReadFileToBlob(AddStringsReturnWStr("Shaders/", aShaderFileName).c_str(), &blob);
 
 	HRESULT hr = myDevice->CreateVertexShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &vertexShader);
 	HRASSERT(hr, "Creating and setting Vertex Shader");
@@ -171,7 +170,7 @@ void Graphics::CreateAndSetPixelShader(std::string aShaderFileName)
 {
 	ComPtr<ID3DBlob> blob;
 	ComPtr<ID3D11PixelShader> pixelShader;
-	D3DReadFileToBlob(std::wstring(aShaderFileName.begin(), aShaderFileName.end()).c_str(), &blob);
+	D3DReadFileToBlob(AddStringsReturnWStr("Shaders/", aShaderFileName).c_str(), &blob);
 
 	HRESULT hr = myDevice->CreatePixelShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &pixelShader);
 	HRASSERT(hr, "Creating and setting Pixel Shader");
@@ -183,7 +182,7 @@ void Graphics::CreateAndSetInputLayout(std::vector<D3D11_INPUT_ELEMENT_DESC> aDe
 {
 	// Get Vertex Shader data
 	ComPtr<ID3DBlob> blob;
-	D3DReadFileToBlob(std::wstring(aVertexShaderFileName.begin(), aVertexShaderFileName.end()).c_str(), &blob);
+	D3DReadFileToBlob(AddStringsReturnWStr("Shaders/", aVertexShaderFileName).c_str(), &blob);
 
 	// Create 
 	ComPtr<ID3D11InputLayout> inputLayout;
@@ -246,7 +245,6 @@ void Graphics::DrawStuff()
 void Graphics::Update()
 {
 	ClearRenderTargetView();
-
 	DrawStuff();
 }
 

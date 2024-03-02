@@ -3,6 +3,7 @@
 #include <iostream>
 #include "../Resources/resource.h"
 #include "Graphics/Graphics.h"
+#include <filesystem>
 
 #pragma warning(disable : 28251)
 
@@ -37,6 +38,22 @@ void CreateAndRegisterWindowClass(HINSTANCE& hInstance, LPCWSTR className)
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
+#pragma region SetWorkDir
+	// Set working directory
+	std::filesystem::path currentPath = std::filesystem::current_path();
+
+	if (IsDebuggerPresent())
+	{
+		currentPath.append("../Assets");
+	}
+	else
+	{
+		currentPath.append("../../Assets");
+	}
+
+	std::filesystem::current_path(currentPath);
+#pragma endregion
+
 	// Create console
 	FILE* consoleStream = CreateConsole();
 

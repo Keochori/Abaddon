@@ -1,6 +1,5 @@
 #pragma once
 #include <iostream>
-#include <string>
 #include <windows.h>
 
 enum LogType

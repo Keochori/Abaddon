@@ -2,6 +2,10 @@
 #include <iostream>
 #include <windows.h>
 
+#if defined(DEBUG) || defined(RELEASE)
+#include <cassert>
+#endif
+
 enum LogType
 {
 	eStandard,
@@ -45,7 +49,16 @@ namespace Log
 	}
 }
 
+#if defined(DEBUG) || defined(RELEASE)
 #define LOG(string) Log::Print(string, LogType::eStandard)
 #define LOG_SUCCESS(string) Log::Print(string, LogType::eSuccess)
 #define LOG_ERROR(string) Log::Print(string, LogType::eError)
+#define Assert(bool) assert(bool)
+
+#else
+#define LOG(string)
+#define LOG_SUCCESS(string) 
+#define LOG_ERROR(string) 
+#define Assert(bool)
+#endif
 

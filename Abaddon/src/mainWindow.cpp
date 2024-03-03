@@ -81,7 +81,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 	if (hwnd == NULL)
 	{
 		LOG_ERROR("Failed to create window");
-		assert(false);
+		Assert(false);
 		return 0;
 	}
 #pragma endregion

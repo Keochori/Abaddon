@@ -3,6 +3,7 @@
 #include <d3dcompiler.h>
 
 #include "Vertex.h"
+#include "CBufferStructs.h"
 
 Graphics::Graphics()
 {
@@ -30,7 +31,7 @@ void Graphics::Init(HWND aWindow)
 	desc.Windowed = TRUE;
 	desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	desc.Flags = 0;
-
+	
 	HRESULT hr = D3D11CreateDeviceAndSwapChain(
 		nullptr,
 		D3D_DRIVER_TYPE_HARDWARE,
@@ -54,6 +55,10 @@ void Graphics::Init(HWND aWindow)
 	SetViewPort();
 
 	InitGame();
+
+	DWORD error = ::GetLastError();
+	std::string message = std::system_category().message(error);
+	std::cout << message << std::endl;
 }
 
 void Graphics::Init(HWND aWindow, float aClearColor[4])
@@ -116,7 +121,7 @@ void Graphics::CreateAndSetVertexBuffer(std::vector<Vertex> aVertexList)
 	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	bufferDesc.CPUAccessFlags = 0u;
 	bufferDesc.MiscFlags = 0u;
-	bufferDesc.ByteWidth = sizeof(Vertex) * aVertexList.size();
+	bufferDesc.ByteWidth = UINT(sizeof(Vertex) * aVertexList.size());
 	bufferDesc.StructureByteStride = sizeof(Vertex);
 
 	D3D11_SUBRESOURCE_DATA subResData = {};
@@ -137,7 +142,7 @@ void Graphics::CreateAndSetIndexBuffer(std::vector<unsigned short> aIndexList)
 
 	D3D11_BUFFER_DESC bufferDesc = {};
 	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	bufferDesc.ByteWidth = sizeof(unsigned short) * aIndexList.size();
+	bufferDesc.ByteWidth = UINT(sizeof(unsigned short) * aIndexList.size());
 	bufferDesc.StructureByteStride = sizeof(unsigned short);
 	bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	bufferDesc.CPUAccessFlags = 0u;
@@ -187,13 +192,59 @@ void Graphics::CreateAndSetInputLayout(std::vector<D3D11_INPUT_ELEMENT_DESC> aDe
 	// Create 
 	ComPtr<ID3D11InputLayout> inputLayout;
 
-	myDevice->CreateInputLayout(std::data(aDescriptionList), aDescriptionList.size(),
+	HRESULT hr = myDevice->CreateInputLayout(std::data(aDescriptionList), (UINT)aDescriptionList.size(),
 		blob->GetBufferPointer(),
 		blob->GetBufferSize(),
 		&inputLayout);
 
+	HRASSERT(hr, "Creating and setting Input Layout");
+
 	// Set
 	myContext->IASetInputLayout(inputLayout.Get());
+}
+
+ComPtr<ID3D11Buffer> Graphics::CreateAndSetConstantBuffer(TestCBuffer aBufferData)
+{
+	ComPtr<ID3D11Buffer> constantBuffer;
+
+	D3D11_BUFFER_DESC bufferDesc;
+	bufferDesc.ByteWidth = sizeof(aBufferData);
+	bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	bufferDesc.MiscFlags = 0;
+	bufferDesc.StructureByteStride = 0;
+
+	D3D11_SUBRESOURCE_DATA subResData;
+	subResData.pSysMem = &aBufferData;
+	subResData.SysMemPitch = 0;
+	subResData.SysMemSlicePitch = 0;
+
+	HRESULT hr = myDevice->CreateBuffer(&bufferDesc, &subResData, constantBuffer.GetAddressOf());
+	HRASSERT(hr, "Creating and setting Constant Buffer");
+
+	myContext->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
+	myContext->PSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
+
+	return constantBuffer;
+}
+
+void Graphics::UpdateCBuffer(TestCBuffer aBufferData)
+{
+	D3D11_MAPPED_SUBRESOURCE bufferData;
+	ZeroMemory(&bufferData, sizeof(D3D11_MAPPED_SUBRESOURCE));
+
+	HRESULT hr = myContext->Map(myCBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &bufferData);
+	if (FAILED(hr))
+	{
+		LOG_ERROR("Updating CBuffer failed.");
+	}
+
+	memcpy(bufferData.pData, &aBufferData, sizeof(aBufferData));
+
+	myContext->Unmap(myCBuffer.Get(), 0);
+	myContext->VSSetConstantBuffers(0, 1, myCBuffer.GetAddressOf());
+	myContext->PSSetConstantBuffers(0, 1, myCBuffer.GetAddressOf());
 }
 
 void Graphics::DrawIndexed(const unsigned int aVertexAmount)
@@ -205,15 +256,15 @@ void Graphics::InitGame()
 {
 	// Vertex buffer
 	CreateAndSetVertexBuffer({
-		{-0.5f, 0.5f, 0.5f,  1,0,0},
-		{ 0.5f, 0.5f, 0.5f,  1,0,1},
-		{-0.5f,-0.5f, 0.5f,  1,1,1},
-		{ 0.5f,-0.5f, 0.5f,  0,1,1},
+		{-0.5f, 0.5f, 0.5f,  -0.7f,  0.4f, 0.5f,   1,0,0,  1,0,1},
+		{ 0.5f, 0.5f, 0.5f,   0.7f,  0.4f, 0.5f,   1,0,1,  1,1,1},
+		{-0.5f,-0.5f, 0.5f,  -0.7f, -0.4f, 0.5f,   1,1,1,  0,0,0},
+		{ 0.5f,-0.5f, 0.5f,   0.7f, -0.4f, 0.5f,   0,1,1,  1,0,0},
 
-		{-0.5f, 0.5f, 1.5f,  0,0,1},
-		{ 0.5f, 0.5f, 1.5f,  0,0,0},
-		{-0.5f,-0.5f, 1.5f,  0,1,1},
-		{ 0.5f,-0.5f, 1.5f,  1,1,1}
+		{-0.5f, 0.5f, 1.5f,  -0.7f,  0.4f, 0.5f,   0,0,1,  0,0,0},
+		{ 0.5f, 0.5f, 1.5f,   0.7f,  0.4f, 0.5f,   0,0,0,  1,1,1},
+		{-0.5f,-0.5f, 1.5f,  -0.7f, -0.4f, 0.5f,   0,1,1,  0,1,0},
+		{ 0.5f,-0.5f, 1.5f,   0.7f, -0.4f, 0.5f,   1,1,1,  1,0,1}
 		});
 
 	// Index buffer
@@ -233,8 +284,13 @@ void Graphics::InitGame()
 	// Input Layout
 	CreateAndSetInputLayout({
 		{"POSITION", 0,DXGI_FORMAT_R32G32B32A32_FLOAT,0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0},
-		{"COLOR", 0,DXGI_FORMAT_R32G32B32A32_FLOAT,0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0}
+		{"POSITION", 1,DXGI_FORMAT_R32G32B32A32_FLOAT,0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0},
+		{"COLOR", 0,DXGI_FORMAT_R32G32B32A32_FLOAT,0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0},
+		{"COLOR", 1,DXGI_FORMAT_R32G32B32A32_FLOAT,0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0}
 		}, "VertexShader_vs.cso");
+
+	// Constant Buffer
+	myCBuffer = CreateAndSetConstantBuffer({ 1 });
 }
 
 void Graphics::DrawStuff()
@@ -246,5 +302,7 @@ void Graphics::Update()
 {
 	ClearRenderTargetView();
 	DrawStuff();
+
+	UpdateCBuffer({ (unsigned int)::GetTickCount64()});
 }
 

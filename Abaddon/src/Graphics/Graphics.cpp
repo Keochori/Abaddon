@@ -4,6 +4,7 @@
 
 #include "Vertex.h"
 #include "CBufferStructs.h"
+#include <DirectXMath.h>
 
 Graphics::Graphics()
 {
@@ -13,8 +14,10 @@ Graphics::~Graphics()
 {
 }
 
-void Graphics::Init(HWND aWindow)
+void Graphics::Init(HWND& aWindow)
 {
+	myWindow = aWindow;
+
 	DXGI_SWAP_CHAIN_DESC desc = {};
 	desc.BufferDesc.Width = 0;
 	desc.BufferDesc.Height = 0;
@@ -61,7 +64,7 @@ void Graphics::Init(HWND aWindow)
 	std::cout << message << std::endl;
 }
 
-void Graphics::Init(HWND aWindow, float aClearColor[4])
+void Graphics::Init(HWND& aWindow, float aClearColor[4])
 {
 	Init(aWindow);
 
@@ -84,8 +87,8 @@ void Graphics::SetPrimitiveTopology()
 void Graphics::SetViewPort()
 {
 	D3D11_VIEWPORT vp;
-	vp.Width = 1424;
-	vp.Height = 728;
+	vp.Width = GetWidth();
+	vp.Height = GetHeight();
 	vp.MinDepth = 0;
 	vp.MaxDepth = 1;
 	vp.TopLeftX = 0;
@@ -247,6 +250,22 @@ void Graphics::UpdateCBuffer(TestCBuffer aBufferData)
 	myContext->PSSetConstantBuffers(0, 1, myCBuffer.GetAddressOf());
 }
 
+int Graphics::GetWidth()
+{
+	RECT rect;
+	GetClientRect(myWindow, &rect);
+
+	return rect.right - rect.left;
+}
+
+int Graphics::GetHeight()
+{
+	RECT rect;
+	GetClientRect(myWindow, &rect);
+
+	return rect.bottom - rect.top;
+}
+
 void Graphics::DrawIndexed(const unsigned int aVertexAmount)
 {
 	myContext->DrawIndexed(aVertexAmount, 0, 0);
@@ -256,15 +275,15 @@ void Graphics::InitGame()
 {
 	// Vertex buffer
 	CreateAndSetVertexBuffer({
-		{-0.5f, 0.5f, 0.5f,  -0.7f,  0.4f, 0.5f,   1,0,0,  1,0,1},
-		{ 0.5f, 0.5f, 0.5f,   0.7f,  0.4f, 0.5f,   1,0,1,  1,1,1},
-		{-0.5f,-0.5f, 0.5f,  -0.7f, -0.4f, 0.5f,   1,1,1,  0,0,0},
-		{ 0.5f,-0.5f, 0.5f,   0.7f, -0.4f, 0.5f,   0,1,1,  1,0,0},
+		{-0.25f, 0.25f, 0.75f,  -0.7f,  0.4f, 0.5f,   1,0,0,  1,0,1},
+		{ 0.25f, 0.25f, 0.75f,   0.7f,  0.4f, 0.5f,   1,0,1,  1,1,1},
+		{-0.25f,-0.25f, 0.75f,  -0.7f, -0.4f, 0.5f,   1,1,1,  0,0,0},
+		{ 0.25f,-0.25f, 0.75f,   0.7f, -0.4f, 0.5f,   0,1,1,  1,0,0},
 
-		{-0.5f, 0.5f, 1.5f,  -0.7f,  0.4f, 0.5f,   0,0,1,  0,0,0},
-		{ 0.5f, 0.5f, 1.5f,   0.7f,  0.4f, 0.5f,   0,0,0,  1,1,1},
-		{-0.5f,-0.5f, 1.5f,  -0.7f, -0.4f, 0.5f,   0,1,1,  0,1,0},
-		{ 0.5f,-0.5f, 1.5f,   0.7f, -0.4f, 0.5f,   1,1,1,  1,0,1}
+		{-0.25f, 0.25f, 1.25f,  -0.7f,  0.4f, 0.5f,   0,0,1,  0,0,0},
+		{ 0.25f, 0.25f, 1.25f,   0.7f,  0.4f, 0.5f,   0,0,0,  1,1,1},
+		{-0.25f,-0.25f, 1.25f,  -0.7f, -0.4f, 0.5f,   0,1,1,  0,1,0},
+		{ 0.25f,-0.25f, 1.25f,   0.7f, -0.4f, 0.5f,   1,1,1,  1,0,1}
 		});
 
 	// Index buffer
@@ -290,7 +309,8 @@ void Graphics::InitGame()
 		}, "VertexShader_vs.cso");
 
 	// Constant Buffer
-	myCBuffer = CreateAndSetConstantBuffer({ 1 });
+
+	myCBuffer = CreateAndSetConstantBuffer({ 1, DirectX::XMMatrixIdentity()});
 }
 
 void Graphics::DrawStuff()
@@ -298,11 +318,14 @@ void Graphics::DrawStuff()
 	DrawIndexed(36);
 }
 
-void Graphics::Update()
+void Graphics::Update(float aRotation)
 {
 	ClearRenderTargetView();
 	DrawStuff();
 
-	UpdateCBuffer({ (unsigned int)::GetTickCount64()});
+	UpdateCBuffer({
+		(unsigned int)::GetTickCount64(),
+		DirectX::XMMatrixRotationZ(aRotation)
+		});
 }
 

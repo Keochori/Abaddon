@@ -36,6 +36,8 @@ void CreateAndRegisterWindowClass(HINSTANCE& hInstance, LPCWSTR className)
 	RegisterClass(&wc);
 }
 
+static float rotation = 0;
+
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
 #pragma region SetWorkDir
@@ -86,6 +88,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 	}
 #pragma endregion
 
+	// Set window position and size
+
+	int width = 1366;
+	int height = 768;
+
+	SetWindowPos(hwnd, nullptr, 200, 200, width, height, 0);
 	ShowWindow(hwnd, nCmdShow);
 
 	// Init graphics class
@@ -114,7 +122,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 		}
 
 		// Game loop
-		graphics.Update();
+		graphics.Update(rotation);
+		rotation += 0.009f;
+
 		graphics.EndFrame();
 	}
 

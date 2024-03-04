@@ -12,6 +12,6 @@ cbuffer constant: register(b0)
 
 float4 main(PS_INPUT input) : SV_TARGET
 {
-	input.color = lerp(input.color, input.color1, (sin(time/1000.0f) + 1.0f) / 2.0f);
+	//input.color = lerp(input.color, input.color1, (sin(time/1000.0f) + 1.0f) / 2.0f);
 	return input.color;
 }

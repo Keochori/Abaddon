@@ -18,11 +18,11 @@ public:
 	Graphics();
 	~Graphics();
 
-	void Init(HWND aWindow);
-	void Init(HWND aWindow, float aClearColor[4]);
+	void Init(HWND& aWindow);
+	void Init(HWND& aWindow, float aClearColor[4]);
 	void EndFrame();
 
-	void Update();
+	void Update(float aRotation);
 
 private:
 	void BindRenderTarget();
@@ -44,6 +44,9 @@ private:
 	void CreateAndSetInputLayout(std::vector<D3D11_INPUT_ELEMENT_DESC> aDescriptionList, std::string aVertexShaderFileName);
 	ComPtr<ID3D11Buffer> CreateAndSetConstantBuffer(TestCBuffer aBufferData);
 	void UpdateCBuffer(TestCBuffer aBufferData);
+
+	int GetWidth();
+	int GetHeight();
 
 	void inline HRASSERT(HRESULT aHr, std::string aDescription)
 	{
@@ -71,6 +74,8 @@ private:
 	ComPtr<ID3D11RenderTargetView> myTarget = nullptr;
 
 	ComPtr<ID3D11Buffer> myCBuffer;
+
+	HWND myWindow;
 };
 
 

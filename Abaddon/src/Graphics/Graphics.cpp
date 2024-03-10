@@ -49,10 +49,11 @@ void Graphics::Init()
 	HRASSERT(hr, "Creation of Device and Swapchain");
 
 	CreateRenderTargetView();
-	//CreateDepth();
+	CreateDepth();
 	BindRenderTarget();
-	SetPrimitiveTopology();
+
 	SetViewPort();
+	SetPrimitiveTopology();
 
 	InitGame();
 }
@@ -65,11 +66,6 @@ void Graphics::Init(float aClearColor[4])
 	{
 		myClearColor[i] = aClearColor[i];
 	}
-}
-
-void Graphics::BindRenderTarget()
-{
-	myContext->OMSetRenderTargets(1u, myTarget.GetAddressOf(), nullptr);
 }
 
 void Graphics::SetPrimitiveTopology()
@@ -105,6 +101,7 @@ void Graphics::CreateRenderTargetView()
 
 void Graphics::CreateDepth()
 {
+	// Depth Stencil State
 	D3D11_DEPTH_STENCIL_DESC depthDesc = {};
 	depthDesc.DepthEnable = true;
 	depthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
@@ -142,15 +139,17 @@ void Graphics::CreateDepth()
 
 	hr = myDevice->CreateDepthStencilView(depthStencil.Get(), &depthStencilViewDesc, &myDepthStencilView);
 	HRASSERT(hr, "Creation of Depth Stencil View");
+}
 
-	// Bind
+void Graphics::BindRenderTarget()
+{
 	myContext->OMSetRenderTargets(1, myTarget.GetAddressOf(), myDepthStencilView.Get());
 }
 
 void Graphics::ClearRenderTargetView()
 {
 	myContext->ClearRenderTargetView(myTarget.Get(), myClearColor);
-	//myContext->ClearDepthStencilView(myDepthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	myContext->ClearDepthStencilView(myDepthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 }
 
 void Graphics::CreateAndSetVertexBuffer(std::vector<Vertex> aVertexList)
@@ -297,7 +296,7 @@ void Graphics::Create3DCube(Cube& aCube)
 		}, "VertexShader_vs.cso");
 
 	// Transform Buffer
-	aCube.myTransformBuffer.Init(myDevice, myContext);
+	HRASSERT(aCube.myTransformBuffer.Init(myDevice, myContext), "Initializing cube");
 	aCube.myTransformBuffer.myData.myTransformation =
 		DirectX::XMMatrixTranspose(
 			DirectX::XMMatrixRotationZ(1) *
@@ -305,18 +304,18 @@ void Graphics::Create3DCube(Cube& aCube)
 			DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f) *
 			DirectX::XMMatrixPerspectiveFovLH(1.0f, 16.0f / 9.0f, 0.5f, 20.0f)
 		);
-	aCube.myTransformBuffer.ApplyChanges();
+	HRASSERT(aCube.myTransformBuffer.ApplyChanges(), "Applying changes to cube");
 	myContext->VSSetConstantBuffers(0, 1, aCube.myTransformBuffer.GetAdressOf());
 
 	// Face Colors Buffer
-	aCube.myFaceColorsBuffer.Init(myDevice, myContext);
+	HRASSERT(aCube.myFaceColorsBuffer.Init(myDevice, myContext), "Initializing cube");
 	aCube.myFaceColorsBuffer.myData.myFaceColors[0] = { 1.0f,0.0f,0.0f };
 	aCube.myFaceColorsBuffer.myData.myFaceColors[1] = { 0.0f,1.0f,0.0f };
 	aCube.myFaceColorsBuffer.myData.myFaceColors[2] = { 0.0f,0.0f,1.0f };
 	aCube.myFaceColorsBuffer.myData.myFaceColors[3] = { 0.0f,1.0f,1.0f };
 	aCube.myFaceColorsBuffer.myData.myFaceColors[4] = { 1.0f,0.0f,1.0f };
 	aCube.myFaceColorsBuffer.myData.myFaceColors[5] = { 1.0f,1.0f,1.0f };
-	aCube.myFaceColorsBuffer.ApplyChanges();
+	HRASSERT(aCube.myFaceColorsBuffer.ApplyChanges(), "Applying changes to cube");
 	myContext->PSSetConstantBuffers(0, 1, aCube.myFaceColorsBuffer.GetAdressOf());
 }
 
@@ -330,7 +329,7 @@ void Graphics::UpdateCube(Cube& aCube, float aRotation)
 			DirectX::XMMatrixPerspectiveFovLH(1.0f, 16.0f / 9.0f, 0.5f, 20.0f)
 		);
 
-	aCube.myTransformBuffer.ApplyChanges();
+	HRASSERT(aCube.myTransformBuffer.ApplyChanges(), "Applying changes to cube", false);
 	myContext->VSSetConstantBuffers(0, 1, aCube.myTransformBuffer.GetAdressOf());
 }
 

@@ -33,7 +33,6 @@ public:
 	void Update(float aRotation);
 
 private:
-	void BindRenderTarget();
 	void SetPrimitiveTopology();
 	void SetViewPort();
 
@@ -41,8 +40,9 @@ private:
 
 	void DrawIndexed(const unsigned int aVertexAmount);
 
-	void CreateRenderTargetView();
 	void CreateDepth();
+	void BindRenderTarget();
+	void CreateRenderTargetView();
 	void ClearRenderTargetView();
 
 	void CreateAndSetVertexBuffer(std::vector<Vertex> aVertexList);
@@ -57,7 +57,7 @@ private:
 	int GetWidth();
 	int GetHeight();
 
-	void inline HRASSERT(HRESULT aHr, std::string aDescription)
+	void inline HRASSERT(HRESULT aHr, std::string aDescription, bool aPrint = true)
 	{
 		if (FAILED(aHr))
 		{
@@ -72,16 +72,17 @@ private:
 		}
 		else
 		{
-			LOG_SUCCESS(aDescription + " succeeded.");
+			if (aPrint)
+				LOG_SUCCESS(aDescription + " succeeded.");
 		}
 	}
 
 	float myClearColor[4] = { 1.0f,1.0f,1.0f,1.0f };
-	ComPtr<ID3D11Device> myDevice = nullptr;
-	ComPtr<IDXGISwapChain> mySwapChain = nullptr;
-	ComPtr<ID3D11DeviceContext> myContext = nullptr;
-	ComPtr<ID3D11RenderTargetView> myTarget = nullptr;
-	ComPtr<ID3D11DepthStencilView> myDepthStencilView = nullptr;
+	ComPtr<ID3D11Device> myDevice;
+	ComPtr<IDXGISwapChain> mySwapChain;
+	ComPtr<ID3D11DeviceContext> myContext;
+	ComPtr<ID3D11RenderTargetView> myTarget;
+	ComPtr<ID3D11DepthStencilView> myDepthStencilView;
 
 	std::vector<Cube> myCubes;
 

@@ -3,10 +3,9 @@
 #include <d3dcompiler.h>
 
 #include "Vertex.h"
-#include "CBufferStructs.h"
 #include <DirectXMath.h>
 
-Graphics::Graphics()
+Graphics::Graphics(HWND& aWindow) : myWindow (aWindow)
 {
 }
 
@@ -14,10 +13,8 @@ Graphics::~Graphics()
 {
 }
 
-void Graphics::Init(HWND& aWindow)
+void Graphics::Init()
 {
-	myWindow = aWindow;
-
 	DXGI_SWAP_CHAIN_DESC desc = {};
 	desc.BufferDesc.Width = 0;
 	desc.BufferDesc.Height = 0;
@@ -30,7 +27,7 @@ void Graphics::Init(HWND& aWindow)
 	desc.SampleDesc.Quality = 0;
 	desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	desc.BufferCount = 1;
-	desc.OutputWindow = aWindow;
+	desc.OutputWindow = myWindow;
 	desc.Windowed = TRUE;
 	desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	desc.Flags = 0;
@@ -51,22 +48,18 @@ void Graphics::Init(HWND& aWindow)
 
 	HRASSERT(hr, "Creation of Device and Swapchain");
 
-	// Not mandatory
 	CreateRenderTargetView();
+	//CreateDepth();
 	BindRenderTarget();
 	SetPrimitiveTopology();
 	SetViewPort();
 
 	InitGame();
-
-	DWORD error = ::GetLastError();
-	std::string message = std::system_category().message(error);
-	std::cout << message << std::endl;
 }
 
-void Graphics::Init(HWND& aWindow, float aClearColor[4])
+void Graphics::Init(float aClearColor[4])
 {
-	Init(aWindow);
+	Init();
 
 	for (int i = 0; i < 3; i++)
 	{
@@ -87,8 +80,8 @@ void Graphics::SetPrimitiveTopology()
 void Graphics::SetViewPort()
 {
 	D3D11_VIEWPORT vp;
-	vp.Width = GetWidth();
-	vp.Height = GetHeight();
+	vp.Width = (float)GetWidth();
+	vp.Height = (float)GetHeight();
 	vp.MinDepth = 0;
 	vp.MaxDepth = 1;
 	vp.TopLeftX = 0;
@@ -110,9 +103,54 @@ void Graphics::CreateRenderTargetView()
 	HRASSERT(hr, "Creation of Render Target View");
 }
 
+void Graphics::CreateDepth()
+{
+	D3D11_DEPTH_STENCIL_DESC depthDesc = {};
+	depthDesc.DepthEnable = true;
+	depthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	depthDesc.DepthFunc = D3D11_COMPARISON_LESS;
+
+	ComPtr<ID3D11DepthStencilState> depthStencilState;
+	
+	HRESULT hr = myDevice->CreateDepthStencilState(&depthDesc, &depthStencilState);
+	HRASSERT(hr, "Creation of Depth Stencil State");
+
+	myContext->OMSetDepthStencilState(depthStencilState.Get(), 1);
+
+	// Depth Stencil Texture
+	ComPtr<ID3D11Texture2D> depthStencil;
+
+	D3D11_TEXTURE2D_DESC textureDesc = {};
+	textureDesc.Width = GetWidth();
+	textureDesc.Height = GetHeight();
+	textureDesc.MipLevels = 1;
+	textureDesc.ArraySize = 1;
+	textureDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+	textureDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+
+	hr = myDevice->CreateTexture2D(&textureDesc, nullptr, &depthStencil);
+	HRASSERT(hr, "Creation of Depth Stencil Texture 2D");
+
+	// Depth Stencil View
+	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc = {};
+	depthStencilViewDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	depthStencilViewDesc.Texture2D.MipSlice = 0;
+
+	hr = myDevice->CreateDepthStencilView(depthStencil.Get(), &depthStencilViewDesc, &myDepthStencilView);
+	HRASSERT(hr, "Creation of Depth Stencil View");
+
+	// Bind
+	myContext->OMSetRenderTargets(1, myTarget.GetAddressOf(), myDepthStencilView.Get());
+}
+
 void Graphics::ClearRenderTargetView()
 {
 	myContext->ClearRenderTargetView(myTarget.Get(), myClearColor);
+	//myContext->ClearDepthStencilView(myDepthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 }
 
 void Graphics::CreateAndSetVertexBuffer(std::vector<Vertex> aVertexList)
@@ -206,50 +244,6 @@ void Graphics::CreateAndSetInputLayout(std::vector<D3D11_INPUT_ELEMENT_DESC> aDe
 	myContext->IASetInputLayout(inputLayout.Get());
 }
 
-ComPtr<ID3D11Buffer> Graphics::CreateAndSetConstantBuffer(TestCBuffer aBufferData)
-{
-	ComPtr<ID3D11Buffer> constantBuffer;
-
-	D3D11_BUFFER_DESC bufferDesc;
-	bufferDesc.ByteWidth = sizeof(aBufferData);
-	bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	bufferDesc.MiscFlags = 0;
-	bufferDesc.StructureByteStride = 0;
-
-	D3D11_SUBRESOURCE_DATA subResData;
-	subResData.pSysMem = &aBufferData;
-	subResData.SysMemPitch = 0;
-	subResData.SysMemSlicePitch = 0;
-
-	HRESULT hr = myDevice->CreateBuffer(&bufferDesc, &subResData, constantBuffer.GetAddressOf());
-	HRASSERT(hr, "Creating and setting Constant Buffer");
-
-	myContext->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
-	myContext->PSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
-
-	return constantBuffer;
-}
-
-void Graphics::UpdateCBuffer(TestCBuffer aBufferData)
-{
-	D3D11_MAPPED_SUBRESOURCE bufferData;
-	ZeroMemory(&bufferData, sizeof(D3D11_MAPPED_SUBRESOURCE));
-
-	HRESULT hr = myContext->Map(myCBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &bufferData);
-	if (FAILED(hr))
-	{
-		LOG_ERROR("Updating CBuffer failed.");
-	}
-
-	memcpy(bufferData.pData, &aBufferData, sizeof(aBufferData));
-
-	myContext->Unmap(myCBuffer.Get(), 0);
-	myContext->VSSetConstantBuffers(0, 1, myCBuffer.GetAddressOf());
-	myContext->PSSetConstantBuffers(0, 1, myCBuffer.GetAddressOf());
-}
-
 int Graphics::GetWidth()
 {
 	RECT rect;
@@ -271,61 +265,129 @@ void Graphics::DrawIndexed(const unsigned int aVertexAmount)
 	myContext->DrawIndexed(aVertexAmount, 0, 0);
 }
 
-void Graphics::InitGame()
+void Graphics::Create3DCube(int index)
 {
 	// Vertex buffer
 	CreateAndSetVertexBuffer({
-		{-0.25f, 0.25f, 0.75f,  -0.7f,  0.4f, 0.5f,   1,0,0,  1,0,1},
-		{ 0.25f, 0.25f, 0.75f,   0.7f,  0.4f, 0.5f,   1,0,1,  1,1,1},
-		{-0.25f,-0.25f, 0.75f,  -0.7f, -0.4f, 0.5f,   1,1,1,  0,0,0},
-		{ 0.25f,-0.25f, 0.75f,   0.7f, -0.4f, 0.5f,   0,1,1,  1,0,0},
+		{-1.0f,-1.0f,-1.0f,},
+		{ 1.0f,-1.0f,-1.0f,},
+		{-1.0f, 1.0f,-1.0f,},
+		{ 1.0f, 1.0f,-1.0f,},
 
-		{-0.25f, 0.25f, 1.25f,  -0.7f,  0.4f, 0.5f,   0,0,1,  0,0,0},
-		{ 0.25f, 0.25f, 1.25f,   0.7f,  0.4f, 0.5f,   0,0,0,  1,1,1},
-		{-0.25f,-0.25f, 1.25f,  -0.7f, -0.4f, 0.5f,   0,1,1,  0,1,0},
-		{ 0.25f,-0.25f, 1.25f,   0.7f, -0.4f, 0.5f,   1,1,1,  1,0,1}
+		{-1.0f,-1.0f, 1.0f,},
+		{ 1.0f,-1.0f, 1.0f,},
+		{-1.0f, 1.0f, 1.0f,},
+		{ 1.0f, 1.0f, 1.0f,}
 		});
 
 	// Index buffer
 	CreateAndSetIndexBuffer({
-		0,1,3, 0,3,2,
-		6,7,5, 6,5,4,
-		0,2,6, 0,6,4,
-		1,7,3, 1,5,7,
-		0,4,5, 0,5,1,
-		2,3,7, 2,7,6
+		0,2,1, 2,3,1,
+		1,3,5, 3,7,5,
+		2,6,3, 3,6,7,
+		4,5,7, 4,7,6,
+		0,4,2, 2,4,6,
+		0,1,4, 1,5,4
 		});
-
-	// Vertex shader
-	CreateAndSetVertexShader("VertexShader_vs.cso");
-	CreateAndSetPixelShader("PixelShader_ps.cso");
 
 	// Input Layout
 	CreateAndSetInputLayout({
 		{"POSITION", 0,DXGI_FORMAT_R32G32B32A32_FLOAT,0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0},
-		{"POSITION", 1,DXGI_FORMAT_R32G32B32A32_FLOAT,0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0},
 		{"COLOR", 0,DXGI_FORMAT_R32G32B32A32_FLOAT,0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0},
-		{"COLOR", 1,DXGI_FORMAT_R32G32B32A32_FLOAT,0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0}
 		}, "VertexShader_vs.cso");
 
-	// Constant Buffer
+	if (index == 1) 
+	{
+		// Transform Buffer
+		myTransformBuffer.Init(myDevice, myContext);
+		myTransformBuffer.myData.myTransformation =
+			DirectX::XMMatrixTranspose(
+				DirectX::XMMatrixRotationZ(1) *
+				DirectX::XMMatrixRotationY(1) *
+				DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f) *
+				DirectX::XMMatrixPerspectiveFovLH(1.0f, 16.0f / 9.0f, 0.5f, 20.0f)
+			);
+		myTransformBuffer.ApplyChanges();
+		myContext->VSSetConstantBuffers(0, 1, myTransformBuffer.GetAdressOf());
 
-	myCBuffer = CreateAndSetConstantBuffer({ 1, DirectX::XMMatrixIdentity()});
+		// Face Colors Buffer
+		myFaceColorsBuffer.Init(myDevice, myContext);
+		myFaceColorsBuffer.myData.myFaceColors[0] = { 1.0f,0.0f,0.0f };
+		myFaceColorsBuffer.myData.myFaceColors[1] = { 0.0f,1.0f,0.0f };
+		myFaceColorsBuffer.myData.myFaceColors[2] = { 0.0f,0.0f,1.0f };
+		myFaceColorsBuffer.myData.myFaceColors[3] = { 0.0f,1.0f,1.0f };
+		myFaceColorsBuffer.myData.myFaceColors[4] = { 1.0f,0.0f,1.0f };
+		myFaceColorsBuffer.myData.myFaceColors[5] = { 1.0f,1.0f,1.0f };
+		myFaceColorsBuffer.ApplyChanges();
+		myContext->PSSetConstantBuffers(0, 1, myFaceColorsBuffer.GetAdressOf());
+	}
+	else
+	{
+		// Transform Buffer
+		myTransformBuffer2.Init(myDevice, myContext);
+		myTransformBuffer2.myData.myTransformation =
+			DirectX::XMMatrixTranspose(
+				DirectX::XMMatrixRotationZ(1) *
+				DirectX::XMMatrixRotationY(1) *
+				DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f) *
+				DirectX::XMMatrixPerspectiveFovLH(1.0f, 16.0f / 9.0f, 0.5f, 20.0f)
+			);
+		myTransformBuffer2.ApplyChanges();
+		myContext->VSSetConstantBuffers(0, 1, myTransformBuffer2.GetAdressOf());
+
+		// Face Colors Buffer
+		myFaceColorsBuffer2.Init(myDevice, myContext);
+		myFaceColorsBuffer2.myData.myFaceColors[0] = { 1.0f,0.0f,0.0f };
+		myFaceColorsBuffer2.myData.myFaceColors[1] = { 0.0f,1.0f,0.0f };
+		myFaceColorsBuffer2.myData.myFaceColors[2] = { 0.0f,0.0f,1.0f };
+		myFaceColorsBuffer2.myData.myFaceColors[3] = { 0.0f,1.0f,1.0f };
+		myFaceColorsBuffer2.myData.myFaceColors[4] = { 1.0f,0.0f,1.0f };
+		myFaceColorsBuffer2.myData.myFaceColors[5] = { 1.0f,1.0f,1.0f };
+		myFaceColorsBuffer2.ApplyChanges();
+		myContext->PSSetConstantBuffers(0, 1, myFaceColorsBuffer2.GetAdressOf());
+	}
 }
 
-void Graphics::DrawStuff()
+void Graphics::InitGame()
 {
-	DrawIndexed(36);
+	// Vertex shader
+	CreateAndSetVertexShader("VertexShader_vs.cso");
+	CreateAndSetPixelShader("PixelShader_ps.cso");
+
+	Create3DCube(1);
+	Create3DCube(2);
 }
 
 void Graphics::Update(float aRotation)
 {
 	ClearRenderTargetView();
-	DrawStuff();
 
-	UpdateCBuffer({
-		(unsigned int)::GetTickCount64(),
-		DirectX::XMMatrixRotationZ(aRotation)
-		});
+	// Transform Buffer 1
+	myTransformBuffer.myData.myTransformation =
+		DirectX::XMMatrixTranspose(
+			DirectX::XMMatrixRotationZ(aRotation) *
+			DirectX::XMMatrixRotationY(aRotation) *
+			DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f) *
+			DirectX::XMMatrixPerspectiveFovLH(1.0f, 16.0f / 9.0f, 0.5f, 20.0f)
+		);
+
+	myTransformBuffer.ApplyChanges();
+	myContext->VSSetConstantBuffers(0, 1, myTransformBuffer.GetAdressOf());
+
+	DrawIndexed(36);
+
+	// Transform Buffer 2
+	myTransformBuffer2.myData.myTransformation =
+		DirectX::XMMatrixTranspose(
+			DirectX::XMMatrixRotationZ(-aRotation - 20) *
+			DirectX::XMMatrixRotationY(-aRotation - 20) *
+			DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f) *
+			DirectX::XMMatrixPerspectiveFovLH(1.0f, 16.0f / 9.0f, 0.5f, 20.0f)
+		);
+
+	myTransformBuffer2.ApplyChanges();
+	myContext->VSSetConstantBuffers(0, 1, myTransformBuffer2.GetAdressOf());
+
+	DrawIndexed(36);
 }
 

@@ -97,9 +97,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 	ShowWindow(hwnd, nCmdShow);
 
 	// Init graphics class
-	Graphics graphics;
+	Graphics graphics(hwnd);
 	float clearColor[4] = { 0.3f,0.4f,0.6f,1.0f };
-	graphics.Init(hwnd, clearColor);
+	graphics.Init(clearColor);
 
 	// Loop
 	bool running = true;

@@ -49,9 +49,11 @@ project "Abaddon"
 
     filter("files:**_vs.hlsl")
     shadertype("Vertex")
+    shadermodel "5.0"
     
     filter("files:**_ps.hlsl")
     shadertype("Pixel")
+    shadermodel "5.0"
     -----------------------
 
     filter "configurations:Debug"

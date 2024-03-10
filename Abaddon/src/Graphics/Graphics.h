@@ -2,6 +2,8 @@
 #include <windows.h>
 #include <d3d11.h>
 #include <wrl.h>
+#include "ConstantBuffer/CBuffer.h"
+#include "ConstantBuffer/CBufferStructs.h"
 
 #if defined(DEBUG) || defined(RELEASE)
 #include <system_error>
@@ -15,11 +17,11 @@ struct TestCBuffer;
 class Graphics
 {
 public:
-	Graphics();
+	Graphics(HWND& aWindow);
 	~Graphics();
 
-	void Init(HWND& aWindow);
-	void Init(HWND& aWindow, float aClearColor[4]);
+	void Init();
+	void Init(float aClearColor[4]);
 	void EndFrame();
 
 	void Update(float aRotation);
@@ -30,11 +32,11 @@ private:
 	void SetViewPort();
 
 	void InitGame();
-	void DrawStuff();
 
 	void DrawIndexed(const unsigned int aVertexAmount);
 
 	void CreateRenderTargetView();
+	void CreateDepth();
 	void ClearRenderTargetView();
 
 	void CreateAndSetVertexBuffer(std::vector<Vertex> aVertexList);
@@ -42,8 +44,8 @@ private:
 	void CreateAndSetVertexShader(std::string aShaderFileName);
 	void CreateAndSetPixelShader(std::string aShaderFileName);
 	void CreateAndSetInputLayout(std::vector<D3D11_INPUT_ELEMENT_DESC> aDescriptionList, std::string aVertexShaderFileName);
-	ComPtr<ID3D11Buffer> CreateAndSetConstantBuffer(TestCBuffer aBufferData);
-	void UpdateCBuffer(TestCBuffer aBufferData);
+
+	void Create3DCube(int index);
 
 	int GetWidth();
 	int GetHeight();
@@ -72,8 +74,13 @@ private:
 	ComPtr<IDXGISwapChain> mySwapChain = nullptr;
 	ComPtr<ID3D11DeviceContext> myContext = nullptr;
 	ComPtr<ID3D11RenderTargetView> myTarget = nullptr;
+	ComPtr<ID3D11DepthStencilView> myDepthStencilView = nullptr;
 
-	ComPtr<ID3D11Buffer> myCBuffer;
+	CBuffer<TransformBuffer> myTransformBuffer;
+	CBuffer<FaceColorsBuffer> myFaceColorsBuffer;
+
+	CBuffer<TransformBuffer> myTransformBuffer2;
+	CBuffer<FaceColorsBuffer> myFaceColorsBuffer2;
 
 	HWND myWindow;
 };

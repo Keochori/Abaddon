@@ -1,17 +1,9 @@
-struct PS_INPUT 
+cbuffer faceColorsBuffer: register(b0)
 {
-	float4 position: SV_POSITION;
-	float4 color: COLOR;
-	float4 color1: COLOR1;
+	float4 face_colors[6];
 };
 
-cbuffer constant: register(b0) 
+float4 main(uint tid : SV_PRIMITIVEID) : SV_TARGET
 {
-	unsigned int time;
-};
-
-float4 main(PS_INPUT input) : SV_TARGET
-{
-	//input.color = lerp(input.color, input.color1, (sin(time/1000.0f) + 1.0f) / 2.0f);
-	return input.color;
+	return face_colors[tid / 2];
 }

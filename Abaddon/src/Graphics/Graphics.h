@@ -14,6 +14,12 @@ using namespace Microsoft::WRL;
 struct Vertex;
 struct TestCBuffer;
 
+struct Cube
+{
+	CBuffer<TransformBuffer> myTransformBuffer;
+	CBuffer<FaceColorsBuffer> myFaceColorsBuffer;
+};
+
 class Graphics
 {
 public:
@@ -45,7 +51,8 @@ private:
 	void CreateAndSetPixelShader(std::string aShaderFileName);
 	void CreateAndSetInputLayout(std::vector<D3D11_INPUT_ELEMENT_DESC> aDescriptionList, std::string aVertexShaderFileName);
 
-	void Create3DCube(int index);
+	void Create3DCube(Cube& aCube);
+	void UpdateCube(Cube& aCube, float aRotation);
 
 	int GetWidth();
 	int GetHeight();
@@ -76,11 +83,7 @@ private:
 	ComPtr<ID3D11RenderTargetView> myTarget = nullptr;
 	ComPtr<ID3D11DepthStencilView> myDepthStencilView = nullptr;
 
-	CBuffer<TransformBuffer> myTransformBuffer;
-	CBuffer<FaceColorsBuffer> myFaceColorsBuffer;
-
-	CBuffer<TransformBuffer> myTransformBuffer2;
-	CBuffer<FaceColorsBuffer> myFaceColorsBuffer2;
+	std::vector<Cube> myCubes;
 
 	HWND myWindow;
 };

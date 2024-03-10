@@ -265,7 +265,7 @@ void Graphics::DrawIndexed(const unsigned int aVertexAmount)
 	myContext->DrawIndexed(aVertexAmount, 0, 0);
 }
 
-void Graphics::Create3DCube(int index)
+void Graphics::Create3DCube(Cube& aCube)
 {
 	// Vertex buffer
 	CreateAndSetVertexBuffer({
@@ -296,56 +296,42 @@ void Graphics::Create3DCube(int index)
 		{"COLOR", 0,DXGI_FORMAT_R32G32B32A32_FLOAT,0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0},
 		}, "VertexShader_vs.cso");
 
-	if (index == 1) 
-	{
-		// Transform Buffer
-		myTransformBuffer.Init(myDevice, myContext);
-		myTransformBuffer.myData.myTransformation =
-			DirectX::XMMatrixTranspose(
-				DirectX::XMMatrixRotationZ(1) *
-				DirectX::XMMatrixRotationY(1) *
-				DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f) *
-				DirectX::XMMatrixPerspectiveFovLH(1.0f, 16.0f / 9.0f, 0.5f, 20.0f)
-			);
-		myTransformBuffer.ApplyChanges();
-		myContext->VSSetConstantBuffers(0, 1, myTransformBuffer.GetAdressOf());
+	// Transform Buffer
+	aCube.myTransformBuffer.Init(myDevice, myContext);
+	aCube.myTransformBuffer.myData.myTransformation =
+		DirectX::XMMatrixTranspose(
+			DirectX::XMMatrixRotationZ(1) *
+			DirectX::XMMatrixRotationY(1) *
+			DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f) *
+			DirectX::XMMatrixPerspectiveFovLH(1.0f, 16.0f / 9.0f, 0.5f, 20.0f)
+		);
+	aCube.myTransformBuffer.ApplyChanges();
+	myContext->VSSetConstantBuffers(0, 1, aCube.myTransformBuffer.GetAdressOf());
 
-		// Face Colors Buffer
-		myFaceColorsBuffer.Init(myDevice, myContext);
-		myFaceColorsBuffer.myData.myFaceColors[0] = { 1.0f,0.0f,0.0f };
-		myFaceColorsBuffer.myData.myFaceColors[1] = { 0.0f,1.0f,0.0f };
-		myFaceColorsBuffer.myData.myFaceColors[2] = { 0.0f,0.0f,1.0f };
-		myFaceColorsBuffer.myData.myFaceColors[3] = { 0.0f,1.0f,1.0f };
-		myFaceColorsBuffer.myData.myFaceColors[4] = { 1.0f,0.0f,1.0f };
-		myFaceColorsBuffer.myData.myFaceColors[5] = { 1.0f,1.0f,1.0f };
-		myFaceColorsBuffer.ApplyChanges();
-		myContext->PSSetConstantBuffers(0, 1, myFaceColorsBuffer.GetAdressOf());
-	}
-	else
-	{
-		// Transform Buffer
-		myTransformBuffer2.Init(myDevice, myContext);
-		myTransformBuffer2.myData.myTransformation =
-			DirectX::XMMatrixTranspose(
-				DirectX::XMMatrixRotationZ(1) *
-				DirectX::XMMatrixRotationY(1) *
-				DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f) *
-				DirectX::XMMatrixPerspectiveFovLH(1.0f, 16.0f / 9.0f, 0.5f, 20.0f)
-			);
-		myTransformBuffer2.ApplyChanges();
-		myContext->VSSetConstantBuffers(0, 1, myTransformBuffer2.GetAdressOf());
+	// Face Colors Buffer
+	aCube.myFaceColorsBuffer.Init(myDevice, myContext);
+	aCube.myFaceColorsBuffer.myData.myFaceColors[0] = { 1.0f,0.0f,0.0f };
+	aCube.myFaceColorsBuffer.myData.myFaceColors[1] = { 0.0f,1.0f,0.0f };
+	aCube.myFaceColorsBuffer.myData.myFaceColors[2] = { 0.0f,0.0f,1.0f };
+	aCube.myFaceColorsBuffer.myData.myFaceColors[3] = { 0.0f,1.0f,1.0f };
+	aCube.myFaceColorsBuffer.myData.myFaceColors[4] = { 1.0f,0.0f,1.0f };
+	aCube.myFaceColorsBuffer.myData.myFaceColors[5] = { 1.0f,1.0f,1.0f };
+	aCube.myFaceColorsBuffer.ApplyChanges();
+	myContext->PSSetConstantBuffers(0, 1, aCube.myFaceColorsBuffer.GetAdressOf());
+}
 
-		// Face Colors Buffer
-		myFaceColorsBuffer2.Init(myDevice, myContext);
-		myFaceColorsBuffer2.myData.myFaceColors[0] = { 1.0f,0.0f,0.0f };
-		myFaceColorsBuffer2.myData.myFaceColors[1] = { 0.0f,1.0f,0.0f };
-		myFaceColorsBuffer2.myData.myFaceColors[2] = { 0.0f,0.0f,1.0f };
-		myFaceColorsBuffer2.myData.myFaceColors[3] = { 0.0f,1.0f,1.0f };
-		myFaceColorsBuffer2.myData.myFaceColors[4] = { 1.0f,0.0f,1.0f };
-		myFaceColorsBuffer2.myData.myFaceColors[5] = { 1.0f,1.0f,1.0f };
-		myFaceColorsBuffer2.ApplyChanges();
-		myContext->PSSetConstantBuffers(0, 1, myFaceColorsBuffer2.GetAdressOf());
-	}
+void Graphics::UpdateCube(Cube& aCube, float aRotation)
+{
+	aCube.myTransformBuffer.myData.myTransformation =
+		DirectX::XMMatrixTranspose(
+			DirectX::XMMatrixRotationZ(aRotation) *
+			DirectX::XMMatrixRotationY(aRotation) *
+			DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f) *
+			DirectX::XMMatrixPerspectiveFovLH(1.0f, 16.0f / 9.0f, 0.5f, 20.0f)
+		);
+
+	aCube.myTransformBuffer.ApplyChanges();
+	myContext->VSSetConstantBuffers(0, 1, aCube.myTransformBuffer.GetAdressOf());
 }
 
 void Graphics::InitGame()
@@ -354,40 +340,18 @@ void Graphics::InitGame()
 	CreateAndSetVertexShader("VertexShader_vs.cso");
 	CreateAndSetPixelShader("PixelShader_ps.cso");
 
-	Create3DCube(1);
-	Create3DCube(2);
+	myCubes.resize(2);
+	Create3DCube(myCubes[0]);
+	Create3DCube(myCubes[1]);
 }
 
 void Graphics::Update(float aRotation)
 {
 	ClearRenderTargetView();
 
-	// Transform Buffer 1
-	myTransformBuffer.myData.myTransformation =
-		DirectX::XMMatrixTranspose(
-			DirectX::XMMatrixRotationZ(aRotation) *
-			DirectX::XMMatrixRotationY(aRotation) *
-			DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f) *
-			DirectX::XMMatrixPerspectiveFovLH(1.0f, 16.0f / 9.0f, 0.5f, 20.0f)
-		);
-
-	myTransformBuffer.ApplyChanges();
-	myContext->VSSetConstantBuffers(0, 1, myTransformBuffer.GetAdressOf());
-
+	UpdateCube(myCubes[0], aRotation);
 	DrawIndexed(36);
-
-	// Transform Buffer 2
-	myTransformBuffer2.myData.myTransformation =
-		DirectX::XMMatrixTranspose(
-			DirectX::XMMatrixRotationZ(-aRotation - 20) *
-			DirectX::XMMatrixRotationY(-aRotation - 20) *
-			DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f) *
-			DirectX::XMMatrixPerspectiveFovLH(1.0f, 16.0f / 9.0f, 0.5f, 20.0f)
-		);
-
-	myTransformBuffer2.ApplyChanges();
-	myContext->VSSetConstantBuffers(0, 1, myTransformBuffer2.GetAdressOf());
-
+	UpdateCube(myCubes[1], -aRotation + 10);
 	DrawIndexed(36);
 }
 

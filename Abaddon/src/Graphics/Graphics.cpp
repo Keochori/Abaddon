@@ -4,6 +4,7 @@
 
 #include "Vertex.h"
 #include <DirectXMath.h>
+#include "DirectXTex/DirectXTex.h"
 
 Graphics::Graphics(HWND& aWindow) : myWindow (aWindow)
 {
@@ -102,12 +103,12 @@ void Graphics::CreateRenderTargetView()
 void Graphics::CreateDepth()
 {
 	// Depth Stencil State
+	ComPtr<ID3D11DepthStencilState> depthStencilState;
+
 	D3D11_DEPTH_STENCIL_DESC depthDesc = {};
 	depthDesc.DepthEnable = true;
 	depthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
 	depthDesc.DepthFunc = D3D11_COMPARISON_LESS;
-
-	ComPtr<ID3D11DepthStencilState> depthStencilState;
 	
 	HRESULT hr = myDevice->CreateDepthStencilState(&depthDesc, &depthStencilState);
 	HRASSERT(hr, "Creation of Depth Stencil State");
@@ -115,7 +116,7 @@ void Graphics::CreateDepth()
 	myContext->OMSetDepthStencilState(depthStencilState.Get(), 1);
 
 	// Depth Stencil Texture
-	ComPtr<ID3D11Texture2D> depthStencil;
+	ComPtr<ID3D11Texture2D> depthStencilTexture;
 
 	D3D11_TEXTURE2D_DESC textureDesc = {};
 	textureDesc.Width = GetWidth();
@@ -128,7 +129,7 @@ void Graphics::CreateDepth()
 	textureDesc.Usage = D3D11_USAGE_DEFAULT;
 	textureDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 
-	hr = myDevice->CreateTexture2D(&textureDesc, nullptr, &depthStencil);
+	hr = myDevice->CreateTexture2D(&textureDesc, nullptr, &depthStencilTexture);
 	HRASSERT(hr, "Creation of Depth Stencil Texture 2D");
 
 	// Depth Stencil View
@@ -137,7 +138,7 @@ void Graphics::CreateDepth()
 	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	depthStencilViewDesc.Texture2D.MipSlice = 0;
 
-	hr = myDevice->CreateDepthStencilView(depthStencil.Get(), &depthStencilViewDesc, &myDepthStencilView);
+	hr = myDevice->CreateDepthStencilView(depthStencilTexture.Get(), &depthStencilViewDesc, &myDepthStencilView);
 	HRASSERT(hr, "Creation of Depth Stencil View");
 }
 
@@ -243,6 +244,51 @@ void Graphics::CreateAndSetInputLayout(std::vector<D3D11_INPUT_ELEMENT_DESC> aDe
 	myContext->IASetInputLayout(inputLayout.Get());
 }
 
+void Graphics::CreateAndSetTexture2D(std::wstring aTextureFileName)
+{
+	HRESULT hr;
+
+	// Image
+	auto image_data = DirectX::ScratchImage{};
+	hr = DirectX::LoadFromWICFile(aTextureFileName.c_str(), DirectX::WIC_FLAGS_NONE, nullptr, image_data);
+	HRASSERT(hr, "Loading Texture image");
+
+	// Texture
+	ComPtr<ID3D11Resource> texture;
+
+	hr = DirectX::CreateTexture(myDevice.Get(), image_data.GetImages(), image_data.GetImageCount(), image_data.GetMetadata(), &texture);
+	HRASSERT(hr, "Creating Texture");
+
+	// Shader Resource View "SRV"
+	ComPtr<ID3D11ShaderResourceView> shaderResourceView;
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = image_data.GetMetadata().format;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MipLevels = image_data.GetMetadata().mipLevels;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = 1;
+
+	hr = myDevice->CreateShaderResourceView(texture.Get(), &srvDesc, &shaderResourceView);
+	HRASSERT(hr, "Creating Shader Resource View");
+
+	myContext->PSSetShaderResources(0, 1, shaderResourceView.GetAddressOf());
+
+	// Sampler 
+	ComPtr<ID3D11SamplerState> samplerState;
+	D3D11_SAMPLER_DESC samplerDesc = {};
+
+	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+
+	hr = myDevice->CreateSamplerState(&samplerDesc, &samplerState);
+	HRASSERT(hr, "Creating sampler");
+
+	myContext->PSSetSamplers(0, 1, samplerState.GetAddressOf());
+}
+
 int Graphics::GetWidth()
 {
 	RECT rect;
@@ -266,33 +312,91 @@ void Graphics::DrawIndexed(const unsigned int aVertexAmount)
 
 void Graphics::Create3DCube(Cube& aCube)
 {
+	math::vector3<float> positions[] = {
+		// Front
+		{-1.0f, 1.0f,-1.0f},
+		{ 1.0f, 1.0f,-1.0f},
+		{-1.0f,-1.0f,-1.0f},
+		{ 1.0f,-1.0f,-1.0f},
+
+		// Back
+		{-1.0f, 1.0f, 1.0f},
+		{ 1.0f, 1.0f, 1.0f},
+		{-1.0f,-1.0f, 1.0f},
+		{ 1.0f,-1.0f, 1.0f}
+	};
+
+	math::vector2<float> texcoords[] = {
+		{0.0f,1.0f},
+		{1.0f,1.0f},
+		{0.0f,0.0f},
+		{1.0f,0.0f},
+	};
+
 	// Vertex buffer
 	CreateAndSetVertexBuffer({
-		{-1.0f,-1.0f,-1.0f,},
-		{ 1.0f,-1.0f,-1.0f,},
-		{-1.0f, 1.0f,-1.0f,},
-		{ 1.0f, 1.0f,-1.0f,},
+		// Front
+		{positions[0], texcoords[0]},
+		{positions[1], texcoords[1]},
+		{positions[2], texcoords[2]},
+		{positions[3], texcoords[3]},
 
-		{-1.0f,-1.0f, 1.0f,},
-		{ 1.0f,-1.0f, 1.0f,},
-		{-1.0f, 1.0f, 1.0f,},
-		{ 1.0f, 1.0f, 1.0f,}
+		// Back
+		{positions[4], texcoords[1]},
+		{positions[5], texcoords[0]},
+		{positions[6], texcoords[3]},
+		{positions[7], texcoords[2]},
+
+		// Left
+		{positions[4], texcoords[0]},
+		{positions[0], texcoords[1]},
+		{positions[6], texcoords[2]},
+		{positions[2], texcoords[3]},
+
+		// Right
+		{positions[1], texcoords[0]},
+		{positions[5], texcoords[1]},
+		{positions[3], texcoords[2]},
+		{positions[7], texcoords[3]},
+
+		// Top
+		{positions[4], texcoords[0]},
+		{positions[5], texcoords[1]},
+		{positions[0], texcoords[2]},
+		{positions[1], texcoords[3]},
+
+		// Bottom
+		{positions[2], texcoords[0]},
+		{positions[3], texcoords[1]},
+		{positions[6], texcoords[2]},
+		{positions[7], texcoords[3]}
 		});
 
 	// Index buffer
 	CreateAndSetIndexBuffer({
-		0,2,1, 2,3,1,
-		1,3,5, 3,7,5,
-		2,6,3, 3,6,7,
-		4,5,7, 4,7,6,
-		0,4,2, 2,4,6,
-		0,1,4, 1,5,4
+		// Front
+		0,1,3, 0,3,2,
+
+		// Back
+		5,4,6, 5,6,7,
+
+		// Left
+		8,9,11, 8,11,10,
+
+		// Right
+		12,13,15, 12,15,14,
+
+		// Top
+		16,17,19, 16,19,18,
+
+		// Bottom
+		20,21,23, 20,23,22
 		});
 
 	// Input Layout
 	CreateAndSetInputLayout({
 		{"POSITION", 0,DXGI_FORMAT_R32G32B32A32_FLOAT,0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0},
-		{"COLOR", 0,DXGI_FORMAT_R32G32B32A32_FLOAT,0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0},
+		{"TEXCOORD", 0,DXGI_FORMAT_R32G32_FLOAT,0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0},
 		}, "VertexShader_vs.cso");
 
 	// Transform Buffer
@@ -306,17 +410,6 @@ void Graphics::Create3DCube(Cube& aCube)
 		);
 	HRASSERT(aCube.myTransformBuffer.ApplyChanges(), "Applying changes to cube");
 	myContext->VSSetConstantBuffers(0, 1, aCube.myTransformBuffer.GetAdressOf());
-
-	// Face Colors Buffer
-	HRASSERT(aCube.myFaceColorsBuffer.Init(myDevice, myContext), "Initializing cube");
-	aCube.myFaceColorsBuffer.myData.myFaceColors[0] = { 1.0f,0.0f,0.0f };
-	aCube.myFaceColorsBuffer.myData.myFaceColors[1] = { 0.0f,1.0f,0.0f };
-	aCube.myFaceColorsBuffer.myData.myFaceColors[2] = { 0.0f,0.0f,1.0f };
-	aCube.myFaceColorsBuffer.myData.myFaceColors[3] = { 0.0f,1.0f,1.0f };
-	aCube.myFaceColorsBuffer.myData.myFaceColors[4] = { 1.0f,0.0f,1.0f };
-	aCube.myFaceColorsBuffer.myData.myFaceColors[5] = { 1.0f,1.0f,1.0f };
-	HRASSERT(aCube.myFaceColorsBuffer.ApplyChanges(), "Applying changes to cube");
-	myContext->PSSetConstantBuffers(0, 1, aCube.myFaceColorsBuffer.GetAdressOf());
 }
 
 void Graphics::UpdateCube(Cube& aCube, float aRotation)
@@ -335,13 +428,16 @@ void Graphics::UpdateCube(Cube& aCube, float aRotation)
 
 void Graphics::InitGame()
 {
-	// Vertex shader
+	// Shaders
 	CreateAndSetVertexShader("VertexShader_vs.cso");
 	CreateAndSetPixelShader("PixelShader_ps.cso");
 
-	myCubes.resize(2);
+	// Cube
+	myCubes.resize(1);
 	Create3DCube(myCubes[0]);
-	Create3DCube(myCubes[1]);
+
+	// Texture
+	CreateAndSetTexture2D(L"brickwall.jpg");
 }
 
 void Graphics::Update(float aRotation)
@@ -349,8 +445,6 @@ void Graphics::Update(float aRotation)
 	ClearRenderTargetView();
 
 	UpdateCube(myCubes[0], aRotation);
-	DrawIndexed(36);
-	UpdateCube(myCubes[1], -aRotation + 10);
 	DrawIndexed(36);
 }
 

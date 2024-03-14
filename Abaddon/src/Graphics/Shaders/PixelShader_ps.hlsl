@@ -1,9 +1,13 @@
-cbuffer faceColorsBuffer: register(b0)
+Texture2D Texture: register(t0);
+sampler TextureSampler: register(s0);
+
+struct PS_INPUT 
 {
-	float4 face_colors[6];
+	float4 position: SV_POSITION;
+	float2 texcoord: TEXCOORD;
 };
 
-float4 main(uint tid : SV_PRIMITIVEID) : SV_TARGET
+float4 main(PS_INPUT input) : SV_TARGET
 {
-	return face_colors[tid / 2];
+	return Texture.Sample(TextureSampler, input.texcoord);
 }

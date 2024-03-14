@@ -29,7 +29,8 @@ project "Abaddon"
     
     links {
         "d3d11.lib",
-        "D3DCompiler.lib"
+        "D3DCompiler.lib",
+        "lib/DirectXTex.lib"
     }
     
     files {
@@ -37,7 +38,8 @@ project "Abaddon"
         "%{prj.name}/src/**.cpp",
         "%{prj.name}/src/**.hpp",
         "%{prj.name}/src/**.h",
-        "%{prj.name}/src/**.hlsl"
+        "%{prj.name}/src/**.hlsl",
+        "%{prj.name}/src/**.inl"
     }
 
     includedirs {

@@ -123,7 +123,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
 		// Game loop
 		graphics.Update(rotation);
-		rotation += 0.009f;
+		rotation += 0.02f;
 
 		graphics.EndFrame();
 	}

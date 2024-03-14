@@ -1,25 +1,36 @@
 #pragma once
-#include "Math/vector4.hpp"
+#include "Math/vectors.h"
 
 struct Vertex
 {
 	Vertex() 
 	{
-		position = { 0,0,0,1 };
+		myPosition = { 0,0,0,1 };
+		myTexcoord = { 0.0f,0.0f };
 	}
 
-	Vertex(float aX, float aY, float aZ)
+	Vertex(float aX, float aY, float aZ, float aU, float aV)
 	{ 
-		position.x = aX;
-		position.y = aY;
-		position.z = aZ;
-		position.w = 1;
+		myPosition.x = aX;
+		myPosition.y = aY;
+		myPosition.z = aZ;
+		myPosition.w = 1;
+
+		myTexcoord.x = aU;
+		myTexcoord.y = aV;
 	}
 
-	Vertex(math::vector4<float>& aPosition)
+	Vertex(math::vector3<float>& aPosition, math::vector2<float> aTexcoord)
 	{ 
-		position = aPosition;
+		myPosition.x = aPosition.x;
+		myPosition.y = aPosition.y;
+		myPosition.z = aPosition.z;
+		myPosition.w = 1;
+
+		myTexcoord.x = aTexcoord.x;
+		myTexcoord.y = aTexcoord.y;
 	}
 
-	math::vector4<float> position;
+	math::vector4<float> myPosition;
+	math::vector2<float> myTexcoord;
 };

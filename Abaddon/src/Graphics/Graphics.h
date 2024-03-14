@@ -5,6 +5,8 @@
 #include "ConstantBuffer/CBuffer.h"
 #include "ConstantBuffer/CBufferStructs.h"
 
+#include "Math/vectors.h"
+
 #if defined(DEBUG) || defined(RELEASE)
 #include <system_error>
 #endif
@@ -16,6 +18,9 @@ struct TestCBuffer;
 
 struct Cube
 {
+	math::vector3<float> myPosition = { 0,0,10.0f };
+
+	ComPtr<ID3D11ShaderResourceView> mySRV;
 	CBuffer<TransformBuffer> myTransformBuffer;
 };
 
@@ -49,7 +54,7 @@ private:
 	void CreateAndSetVertexShader(std::string aShaderFileName);
 	void CreateAndSetPixelShader(std::string aShaderFileName);
 	void CreateAndSetInputLayout(std::vector<D3D11_INPUT_ELEMENT_DESC> aDescriptionList, std::string aVertexShaderFileName);
-	void CreateAndSetTexture2D(std::wstring aTextureFileName);
+	void CreateAndSetTexture2D(std::wstring aTextureFileName, ComPtr<ID3D11ShaderResourceView>& aSRV);
 
 	void Create3DCube(Cube& aCube);
 	void UpdateCube(Cube& aCube, float aRotation);

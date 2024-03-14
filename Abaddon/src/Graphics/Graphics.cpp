@@ -244,7 +244,7 @@ void Graphics::CreateAndSetInputLayout(std::vector<D3D11_INPUT_ELEMENT_DESC> aDe
 	myContext->IASetInputLayout(inputLayout.Get());
 }
 
-void Graphics::CreateAndSetTexture2D(std::wstring aTextureFileName)
+void Graphics::CreateAndSetTexture2D(std::wstring aTextureFileName, ComPtr<ID3D11ShaderResourceView>& aSRV)
 {
 	HRESULT hr;
 
@@ -260,8 +260,6 @@ void Graphics::CreateAndSetTexture2D(std::wstring aTextureFileName)
 	HRASSERT(hr, "Creating Texture");
 
 	// Shader Resource View "SRV"
-	ComPtr<ID3D11ShaderResourceView> shaderResourceView;
-
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Format = image_data.GetMetadata().format;
 	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
@@ -269,10 +267,11 @@ void Graphics::CreateAndSetTexture2D(std::wstring aTextureFileName)
 	srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.Texture2D.MipLevels = 1;
 
-	hr = myDevice->CreateShaderResourceView(texture.Get(), &srvDesc, &shaderResourceView);
+	hr = myDevice->CreateShaderResourceView(texture.Get(), &srvDesc, &aSRV);
 	HRASSERT(hr, "Creating Shader Resource View");
 
-	myContext->PSSetShaderResources(0, 1, shaderResourceView.GetAddressOf());
+	myContext->PSSetShaderResources(0, 1, aSRV.GetAddressOf());
+	
 
 	// Sampler 
 	ComPtr<ID3D11SamplerState> samplerState;
@@ -405,7 +404,7 @@ void Graphics::Create3DCube(Cube& aCube)
 		DirectX::XMMatrixTranspose(
 			DirectX::XMMatrixRotationZ(1) *
 			DirectX::XMMatrixRotationY(1) *
-			DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f) *
+			DirectX::XMMatrixTranslation(aCube.myPosition.x, aCube.myPosition.y, aCube.myPosition.z) *
 			DirectX::XMMatrixPerspectiveFovLH(1.0f, 16.0f / 9.0f, 0.5f, 20.0f)
 		);
 	HRASSERT(aCube.myTransformBuffer.ApplyChanges(), "Applying changes to cube");
@@ -418,12 +417,16 @@ void Graphics::UpdateCube(Cube& aCube, float aRotation)
 		DirectX::XMMatrixTranspose(
 			DirectX::XMMatrixRotationZ(aRotation) *
 			DirectX::XMMatrixRotationY(aRotation) *
-			DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f) *
+			DirectX::XMMatrixTranslation(aCube.myPosition.x, aCube.myPosition.y, aCube.myPosition.z) *
 			DirectX::XMMatrixPerspectiveFovLH(1.0f, 16.0f / 9.0f, 0.5f, 20.0f)
 		);
 
+	// Set Transform Buffer
 	HRASSERT(aCube.myTransformBuffer.ApplyChanges(), "Applying changes to cube", false);
 	myContext->VSSetConstantBuffers(0, 1, aCube.myTransformBuffer.GetAdressOf());
+
+	// Set Texture
+	myContext->PSSetShaderResources(0, 1, aCube.mySRV.GetAddressOf());
 }
 
 void Graphics::InitGame()
@@ -433,11 +436,15 @@ void Graphics::InitGame()
 	CreateAndSetPixelShader("PixelShader_ps.cso");
 
 	// Cube
-	myCubes.resize(1);
+	myCubes.resize(2);
 	Create3DCube(myCubes[0]);
+	Create3DCube(myCubes[1]);
 
-	// Texture
-	CreateAndSetTexture2D(L"brickwall.jpg");
+	CreateAndSetTexture2D(L"brick.jpg", myCubes[0].mySRV);
+	CreateAndSetTexture2D(L"rock.png", myCubes[1].mySRV);
+
+	myCubes[0].myPosition = { 2.0f,0.0f,8.0f };
+	myCubes[1].myPosition = { -2.0f,0.0f,8.0f };
 }
 
 void Graphics::Update(float aRotation)
@@ -445,6 +452,9 @@ void Graphics::Update(float aRotation)
 	ClearRenderTargetView();
 
 	UpdateCube(myCubes[0], aRotation);
+	DrawIndexed(36);
+
+	UpdateCube(myCubes[1], -aRotation + 20);
 	DrawIndexed(36);
 }
 

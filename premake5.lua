@@ -36,14 +36,19 @@ project "Abaddon"
     files {
         "%{prj.name}/Resources/*",
         "%{prj.name}/src/**.cpp",
-        "%{prj.name}/src/**.hpp",
         "%{prj.name}/src/**.h",
+        "%{prj.name}/src/**.hpp",
         "%{prj.name}/src/**.hlsl",
-        "%{prj.name}/src/**.inl"
+
+        "%{prj.name}/vendor/**.cpp",
+        "%{prj.name}/vendor/**.h",
+        "%{prj.name}/vendor/**.hpp",
+        "%{prj.name}/vendor/**.inl"
     }
 
     includedirs {
-        "%{prj.name}/src"
+        "%{prj.name}/src",
+        "%{prj.name}/vendor"
     }
 
     -- Shader options

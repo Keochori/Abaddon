@@ -6,6 +6,8 @@
 #include "ConstantBuffer/CBufferStructs.h"
 
 #include "Math/vectors.h"
+#include "Tools/Input.h"
+#include "Camera.h"
 
 #if defined(DEBUG) || defined(RELEASE)
 #include <system_error>
@@ -27,11 +29,12 @@ struct Cube
 class Graphics
 {
 public:
-	Graphics(HWND& aWindow);
-	~Graphics();
+	Graphics(HWND& aWindow, Input& aInput);
+	~Graphics() = default;
 
-	void Init();
-	void Init(float aClearColor[4]);
+	void Init(Input& aInput);
+	void Init(float aClearColor[4], Input& aInput);
+	void BeginFrame();
 	void EndFrame();
 
 	void Update(float aRotation);
@@ -83,15 +86,17 @@ private:
 	}
 
 	float myClearColor[4] = { 1.0f,1.0f,1.0f,1.0f };
+	HWND myWindow;
 	ComPtr<ID3D11Device> myDevice;
 	ComPtr<IDXGISwapChain> mySwapChain;
 	ComPtr<ID3D11DeviceContext> myContext;
 	ComPtr<ID3D11RenderTargetView> myTarget;
 	ComPtr<ID3D11DepthStencilView> myDepthStencilView;
 
+	Input& myInput;
 	std::vector<Cube> myCubes;
+	Camera myCamera;
 
-	HWND myWindow;
 };
 
 

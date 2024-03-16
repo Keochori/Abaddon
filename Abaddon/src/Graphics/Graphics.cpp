@@ -6,16 +6,13 @@
 #include <DirectXMath.h>
 #include "DirectXTex/DirectXTex.h"
 
-Graphics::Graphics(HWND& aWindow) : myWindow (aWindow)
+Graphics::Graphics(HWND& aWindow, Input& aInput) : myWindow (aWindow), myInput(aInput), myCamera(aInput)
 {
 }
 
-Graphics::~Graphics()
+void Graphics::Init(Input& aInput)
 {
-}
 
-void Graphics::Init()
-{
 	DXGI_SWAP_CHAIN_DESC desc = {};
 	desc.BufferDesc.Width = 0;
 	desc.BufferDesc.Height = 0;
@@ -59,9 +56,9 @@ void Graphics::Init()
 	InitGame();
 }
 
-void Graphics::Init(float aClearColor[4])
+void Graphics::Init(float aClearColor[4], Input& aInput)
 {
-	Init();
+	Init(aInput);
 
 	for (int i = 0; i < 3; i++)
 	{
@@ -84,6 +81,11 @@ void Graphics::SetViewPort()
 	vp.TopLeftX = 0;
 	vp.TopLeftY = 0;
 	myContext->RSSetViewports(1u, &vp);
+}
+
+void Graphics::BeginFrame()
+{
+	ClearRenderTargetView();
 }
 
 void Graphics::EndFrame()
@@ -405,6 +407,7 @@ void Graphics::Create3DCube(Cube& aCube)
 			DirectX::XMMatrixRotationZ(1) *
 			DirectX::XMMatrixRotationY(1) *
 			DirectX::XMMatrixTranslation(aCube.myPosition.x, aCube.myPosition.y, aCube.myPosition.z) *
+			myCamera.GetMatrix() *
 			DirectX::XMMatrixPerspectiveFovLH(1.0f, 16.0f / 9.0f, 0.5f, 20.0f)
 		);
 	HRASSERT(aCube.myTransformBuffer.ApplyChanges(), "Applying changes to cube");
@@ -418,7 +421,8 @@ void Graphics::UpdateCube(Cube& aCube, float aRotation)
 			DirectX::XMMatrixRotationZ(aRotation) *
 			DirectX::XMMatrixRotationY(aRotation) *
 			DirectX::XMMatrixTranslation(aCube.myPosition.x, aCube.myPosition.y, aCube.myPosition.z) *
-			DirectX::XMMatrixPerspectiveFovLH(1.0f, 16.0f / 9.0f, 0.5f, 20.0f)
+			myCamera.GetMatrix() *
+			DirectX::XMMatrixPerspectiveFovLH(1.0f, 16.0f / 9.0f, 0.1f, 1000.0f)
 		);
 
 	// Set Transform Buffer
@@ -435,6 +439,9 @@ void Graphics::InitGame()
 	CreateAndSetVertexShader("VertexShader_vs.cso");
 	CreateAndSetPixelShader("PixelShader_ps.cso");
 
+	// Camera
+	myCamera.Init(0.2f, 0.005f);
+
 	// Cube
 	myCubes.resize(2);
 	Create3DCube(myCubes[0]);
@@ -443,13 +450,13 @@ void Graphics::InitGame()
 	CreateAndSetTexture2D(L"brick.jpg", myCubes[0].mySRV);
 	CreateAndSetTexture2D(L"rock.png", myCubes[1].mySRV);
 
-	myCubes[0].myPosition = { 2.0f,0.0f,8.0f };
+	myCubes[0].myPosition = { 2.0f,0.0f,15.0f };
 	myCubes[1].myPosition = { -2.0f,0.0f,8.0f };
 }
 
 void Graphics::Update(float aRotation)
 {
-	ClearRenderTargetView();
+	myCamera.Update();
 
 	UpdateCube(myCubes[0], aRotation);
 	DrawIndexed(36);

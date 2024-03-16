@@ -5,7 +5,11 @@
 #include "Graphics/Graphics.h"
 #include <filesystem>
 
+#include "Tools/Input.h"
+
 #pragma warning(disable : 28251)
+
+static Input myInput;
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -97,9 +101,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 	ShowWindow(hwnd, nCmdShow);
 
 	// Init graphics class
-	Graphics graphics(hwnd);
+	Graphics graphics(hwnd, myInput);
 	float clearColor[4] = { 0.3f,0.4f,0.6f,1.0f };
-	graphics.Init(clearColor);
+	graphics.Init(clearColor, myInput);
 
 	// Loop
 	bool running = true;
@@ -121,9 +125,13 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 			}
 		}
 
-		// Game loop
+		graphics.BeginFrame();
+		myInput.Update();
+
+		// Game loop --------------
 		graphics.Update(rotation);
 		rotation += 0.02f;
+		// ------------------------
 
 		graphics.EndFrame();
 	}
@@ -133,6 +141,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	myInput.UpdateEvents(uMsg, wParam, lParam);
+
 	switch (uMsg)
 	{
 		case WM_DESTROY:

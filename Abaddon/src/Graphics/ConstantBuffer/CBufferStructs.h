@@ -1,6 +1,5 @@
 #pragma once
 #include "CBuffer.h"
-#include "Math/matrix4x4.hpp"
 #include <DirectXMath.h>
 
 __declspec(align(16))

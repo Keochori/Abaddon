@@ -1,5 +1,6 @@
 bin/
 bin-int/
+Assets/Shaders/*.cso
 
 # Other
 *.vcxproj

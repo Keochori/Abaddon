@@ -25,7 +25,16 @@ void Model::LoadModel(std::string aFilePath, std::shared_ptr<Camera> aCamera)
 		for (int vIndex = 0; vIndex < mesh->mNumVertices; vIndex++)
 		{
 			auto vertex = mesh->mVertices[vIndex];
-			vertexList.push_back({ vertex.x, vertex.y, vertex.z, 0, 0 });
+			
+			aiVector3D* textureCoords = mesh->mTextureCoords[0];
+			if (textureCoords)
+			{
+				vertexList.push_back({ vertex.x, vertex.y, vertex.z, mesh->mTextureCoords[0][vIndex].x, mesh->mTextureCoords[0][vIndex].y });
+			}
+			else
+			{
+				vertexList.push_back({ vertex.x, vertex.y, vertex.z, 0, 0 });
+			}
 		}
 
 		for (int fIndex = 0; fIndex < mesh->mNumFaces; fIndex++)
@@ -47,7 +56,7 @@ void Model::LoadModel(std::string aFilePath, std::shared_ptr<Camera> aCamera)
 		}, "VertexShader_vs.cso");
 
 	// SRV
-	myModelData.mySRV.Init(L"rock.png");
+	myModelData.mySRV.Init(L"sand.jpg");
 
 	// Sampler
 	myModelData.mySampler.Init();

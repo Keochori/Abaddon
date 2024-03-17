@@ -116,9 +116,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 	scene.Init(myInput);
 
 	// Init
-	std::shared_ptr<Model> monkey = std::make_shared<Model>();
-	monkey->LoadModel("rose.obj", scene.GetCamera());
-	scene.AddModel(monkey);
+	std::shared_ptr<Model> mdl = std::make_shared<Model>();
+	mdl->LoadModel("monkey.obj", scene.GetCamera());
+	scene.AddModel(mdl);
 
 	// Loop
 	bool running = true;

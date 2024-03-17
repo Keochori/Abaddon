@@ -7,7 +7,7 @@
 void Model::LoadModel(std::string aFilePath, std::shared_ptr<Camera> aCamera)
 {
 	Assimp::Importer importer;
-	auto modelData = importer.ReadFile(aFilePath, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
+	auto modelData = importer.ReadFile("Models/" + aFilePath, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
 	if (!modelData)
 	{
 		LOG_ERROR("Failed to load model '" + aFilePath + "'");
@@ -56,7 +56,7 @@ void Model::LoadModel(std::string aFilePath, std::shared_ptr<Camera> aCamera)
 		}, "VertexShader_vs.cso");
 
 	// SRV
-	myModelData.mySRV.Init(L"sand.jpg");
+	myModelData.mySRV.Init("sand.jpg");
 
 	// Sampler
 	myModelData.mySampler.Init();

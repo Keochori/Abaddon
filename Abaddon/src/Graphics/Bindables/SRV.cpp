@@ -3,11 +3,11 @@
 #include "Graphics/DX11.h"
 #include "DirectXTex/DirectXTex.h"
 
-void SRV::Init(std::wstring aTextureFileName)
+void SRV::Init(std::string aTextureFileName)
 {
 	// Image
 	auto image_data = DirectX::ScratchImage{};
-	HRESULT hr = DirectX::LoadFromWICFile(aTextureFileName.c_str(), DirectX::WIC_FLAGS_NONE, nullptr, image_data);
+	HRESULT hr = DirectX::LoadFromWICFile(AddStringsReturnWStr("Textures/", aTextureFileName).c_str(), DirectX::WIC_FLAGS_NONE, nullptr, image_data);
 	DX11::HRASSERT(hr, "Loading Texture Image");
 
 	// Texture

@@ -2,8 +2,10 @@
 #include <windows.h>
 #include <iostream>
 #include "../Resources/resource.h"
-#include "Graphics/Graphics.h"
 #include <filesystem>
+#include "Graphics/DX11.h"
+#include "Graphics/Renderer.h"
+#include "Graphics/Scene/Scene.h"
 
 #include "Tools/Input.h"
 
@@ -93,17 +95,30 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 #pragma endregion
 
 	// Set window position and size
-
 	int width = 1366;
 	int height = 768;
 
 	SetWindowPos(hwnd, nullptr, 200, 200, width, height, 0);
 	ShowWindow(hwnd, nCmdShow);
+	// ---------------------------------------------------------------
 
-	// Init graphics class
-	Graphics graphics(hwnd, myInput);
+	// Create framework
+	DX11 framework(hwnd);
+	framework.Initialize(true);
+
 	float clearColor[4] = { 0.3f,0.4f,0.6f,1.0f };
-	graphics.Init(clearColor, myInput);
+
+	// Create renderer
+	Renderer renderer;
+
+	// Create scene
+	Scene scene;
+	scene.Init(myInput);
+
+	// Init
+	std::shared_ptr<Model> monkey = std::make_shared<Model>();
+	monkey->LoadModel("blenderMonkey.obj", scene.GetCamera());
+	scene.AddModel(monkey);
 
 	// Loop
 	bool running = true;
@@ -125,15 +140,15 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 			}
 		}
 
-		graphics.BeginFrame();
+		framework.BeginFrame(clearColor);
 		myInput.Update();
 
 		// Game loop --------------
-		graphics.Update(rotation);
-		rotation += 0.02f;
+		scene.Update();
 		// ------------------------
 
-		graphics.EndFrame();
+		renderer.Render(scene.GetModels());
+		framework.EndFrame();
 	}
 
 	return 0;

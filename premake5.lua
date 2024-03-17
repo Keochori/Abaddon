@@ -19,18 +19,23 @@ project "Abaddon"
     
     TargetDir = "bin/%{cfg.buildcfg}"
     ObjectDir = "bin-int/%{cfg.buildcfg}"
+    AssimpDLL = "Abaddon/vendor/Assimp/assimp-vc143-mt.dll"
     
     targetdir (TargetDir)
     objdir (ObjectDir)
 
+    postbuildcommands { "{COPYFILE} %[" .. AssimpDLL ..  "] %[" .. TargetDir .. "]" }
+
     defines {
-        "UNICODE"
+        "UNICODE",
+        "NOMINMAX"
     }
     
     links {
         "d3d11.lib",
         "D3DCompiler.lib",
-        "lib/DirectXTex.lib"
+        "lib/DirectXTex.lib",
+        "lib/assimp-vc143-mt.lib"
     }
     
     files {

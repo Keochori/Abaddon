@@ -1,10 +1,13 @@
 #pragma once
 
+// Includes
 #include "Log.h"
 
 #include <vector>
 #include <string>
+#include <memory>
 
+// Functions
 static std::wstring AddStringsReturnWStr(const std::string aString1, const std::string aString2)
 {
 	std::string newString(aString1 + aString2);

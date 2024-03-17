@@ -402,3 +402,4 @@ FodyWeavers.xsd
 
 # Exlusions
 !lib/*.pdb
+!Assets/*.obj

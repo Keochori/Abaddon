@@ -29,7 +29,7 @@ void Model::LoadModel(std::string aFilePath, std::shared_ptr<Camera> aCamera)
 			aiVector3D* textureCoords = mesh->mTextureCoords[0];
 			if (textureCoords)
 			{
-				vertexList.push_back({ vertex.x, vertex.y, vertex.z, mesh->mTextureCoords[0][vIndex].x, mesh->mTextureCoords[0][vIndex].y });
+				vertexList.push_back({ vertex.x, vertex.y, vertex.z, mesh->mTextureCoords[0][vIndex].x, 1.0f - mesh->mTextureCoords[0][vIndex].y });
 			}
 			else
 			{
@@ -56,7 +56,7 @@ void Model::LoadModel(std::string aFilePath, std::shared_ptr<Camera> aCamera)
 		}, "VertexShader_vs.cso");
 
 	// SRV
-	myModelData.mySRV.Init("sand.jpg");
+	myModelData.mySRV.Init("gremlin.jpg");
 
 	// Sampler
 	myModelData.mySampler.Init();

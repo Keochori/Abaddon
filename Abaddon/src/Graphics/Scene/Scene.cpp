@@ -4,7 +4,7 @@
 void Scene::Init(Input& aInput)
 {
 	myCamera = std::make_shared<Camera>(aInput);
-	myCamera->Init(0.2f, 0.005f);
+	myCamera->Init(0.9f, 0.005f);
 }
 
 void Scene::Update()

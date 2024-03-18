@@ -117,7 +117,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
 	// Init
 	std::shared_ptr<Model> mdl = std::make_shared<Model>();
-	mdl->LoadModel("monkey.obj", scene.GetCamera());
+	mdl->LoadModel("gremlin.fbx", scene.GetCamera());
 	scene.AddModel(mdl);
 
 	// Loop

@@ -8,7 +8,7 @@ using namespace DirectX;
 class Camera
 {
 public:
-	Camera(Input& aInput);
+	Camera();
 	~Camera() = default;
 
 	void Init(float aCameraSpeed, float aRotationSpeed, bool aFirstPerson = false);
@@ -22,7 +22,6 @@ private:
 	bool myFirstPerson;
 	float myMovementSpeed;
 	float myRotationSpeed;
-	Input& myInput;
 
 	XMMATRIX myCameraMatrix;
 

@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include "Math/vectors.h"
 
 // Functions
 static std::wstring AddStringsReturnWStr(const std::string aString1, const std::string aString2)

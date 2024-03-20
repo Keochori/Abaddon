@@ -1,15 +1,18 @@
 #pragma once
-#include "Scene/Model.h"
+#include "Bindables/CBuffer.hpp"
+
+struct ModelData;
+struct TextureData;
+struct Transform;
+class Camera;
 
 class Renderer
 {
 public:
-	Renderer() = default;
-	~Renderer() = default;
-
-	void Render(std::vector<std::shared_ptr<Model>> aModelList);
+	void Init();
+	void Render(ModelData& aModelData, TextureData& aTextureData, Transform& aTransform, std::shared_ptr<Camera> aCamera);
 
 private:
-
+	CBuffer<TransformBuffer> myCBufferTransform;
 };
 

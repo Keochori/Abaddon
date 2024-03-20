@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "Camera.h"
 
-Camera::Camera(Input& aInput) : myInput(aInput)
+Camera::Camera()
 {
 }
 
@@ -84,34 +84,34 @@ void Camera::CalculateMatrix()
 
 void Camera::UpdateInput()
 {
-	if (myInput.IsMouseButtonDown((int)eKeys::MOUSERBUTTON))
+	if (Input::GetInstance().IsMouseButtonDown((int)eKeys::MOUSERBUTTON))
 	{
-		myCamPitch += myInput.GetMouseDelta().y * myRotationSpeed;
-		myCamYaw += myInput.GetMouseDelta().x * myRotationSpeed;
+		myCamPitch += Input::GetInstance().GetMouseDelta().y * myRotationSpeed;
+		myCamYaw += Input::GetInstance().GetMouseDelta().x * myRotationSpeed;
 	}
 
 	// Keyboard
-	if (myInput.IsKeyDown((int)eKeys::W))
+	if (Input::GetInstance().IsKeyDown((int)eKeys::W))
 	{
 		myInputBackForward += myMovementSpeed;
 	}
-	if (myInput.IsKeyDown((int)eKeys::S))
+	if (Input::GetInstance().IsKeyDown((int)eKeys::S))
 	{
 		myInputBackForward -= myMovementSpeed;
 	}
-	if (myInput.IsKeyDown((int)eKeys::A))
+	if (Input::GetInstance().IsKeyDown((int)eKeys::A))
 	{
 		myInputLeftRight -= myMovementSpeed;
 	}
-	if (myInput.IsKeyDown((int)eKeys::D))
+	if (Input::GetInstance().IsKeyDown((int)eKeys::D))
 	{
 		myInputLeftRight += myMovementSpeed;
 	}
-	if (myInput.IsKeyDown((int)eKeys::Q))
+	if (Input::GetInstance().IsKeyDown((int)eKeys::Q))
 	{
 		myInputUpDown -= myMovementSpeed;
 	}
-	if (myInput.IsKeyDown((int)eKeys::E))
+	if (Input::GetInstance().IsKeyDown((int)eKeys::E))
 	{
 		myInputUpDown += myMovementSpeed;
 	}

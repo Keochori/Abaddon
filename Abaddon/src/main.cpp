@@ -4,14 +4,12 @@
 #include "../Resources/resource.h"
 #include <filesystem>
 #include "Graphics/DX11.h"
+#include "Scene/Scene.h"
 #include "Graphics/Renderer.h"
-#include "Graphics/Scene/Scene.h"
 
 #include "Tools/Input.h"
 
 #pragma warning(disable : 28251)
-
-static Input myInput;
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -110,15 +108,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
 	// Create renderer
 	Renderer renderer;
+	renderer.Init();
 
 	// Create scene
-	Scene scene;
-	scene.Init(myInput);
-
-	// Init
-	std::shared_ptr<Model> mdl = std::make_shared<Model>();
-	mdl->LoadModel("gremlin.fbx", scene.GetCamera());
-	scene.AddModel(mdl);
+	std::shared_ptr<Scene> scene = std::make_shared<Scene>(renderer);
+	scene->Init();
 
 	// Loop
 	bool running = true;
@@ -141,13 +135,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 		}
 
 		framework.BeginFrame(clearColor);
-		myInput.Update();
+		Input::GetInstance().Update();
 
 		// Game loop --------------
-		scene.Update();
+		scene->Update();
 		// ------------------------
-
-		renderer.Render(scene.GetModels());
 		framework.EndFrame();
 	}
 
@@ -156,7 +148,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	myInput.UpdateEvents(uMsg, wParam, lParam);
+	Input::GetInstance().UpdateEvents(uMsg, wParam, lParam);
 
 	switch (uMsg)
 	{

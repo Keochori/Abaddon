@@ -9,8 +9,9 @@
 enum LogType
 {
 	eStandard,
-	eError,
-	eSuccess
+	eSuccess,
+	eWarning,
+	eError
 };
 
 namespace Log
@@ -30,13 +31,18 @@ namespace Log
 				std::cout << aString << std::endl;
 				break;
 
-			case eError:
-				SetConsoleTextAttribute(hConsole, RED);
+			case eSuccess:
+				SetConsoleTextAttribute(hConsole, GREEN);
 				std::cout << aString << std::endl;
 				break;
 
-			case eSuccess:
-				SetConsoleTextAttribute(hConsole, GREEN);
+			case eWarning:
+				SetConsoleTextAttribute(hConsole, YELLOW);
+				std::cout << aString << std::endl;
+				break;
+
+			case eError:
+				SetConsoleTextAttribute(hConsole, RED);
 				std::cout << aString << std::endl;
 				break;
 
@@ -52,12 +58,14 @@ namespace Log
 #if defined(DEBUG) || defined(RELEASE)
 #define LOG(string) Log::Print(string, LogType::eStandard)
 #define LOG_SUCCESS(string) Log::Print(string, LogType::eSuccess)
+#define LOG_WARNING(string) Log::Print(string, LogType::eWarning)
 #define LOG_ERROR(string) Log::Print(string, LogType::eError)
 #define Assert(bool) assert(bool)
 
 #else
 #define LOG(string)
 #define LOG_SUCCESS(string) 
+#define LOG_WARNING(string) 
 #define LOG_ERROR(string) 
 #define Assert(bool)
 #endif

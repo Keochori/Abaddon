@@ -1,5 +1,5 @@
 #pragma once
-#include "CBuffer.hpp"
+#include "Bindables/CBuffer.hpp"
 #include <DirectXMath.h>
 
 __declspec(align(16))

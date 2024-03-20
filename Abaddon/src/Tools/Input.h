@@ -246,8 +246,11 @@ enum class eKeys : int
 class Input
 {
 public:
-	Input();
-	~Input();
+	Input(const Input&) = delete;
+	Input& operator=(const Input&) = delete;
+
+	static Input& GetInstance();
+
 	bool IsKeyDown(const int aKeyCode) const;
 	bool IsKeyPressed(const int aKeyCode) const;
 	bool IsKeyUp(const int aKeyCode) const;
@@ -263,6 +266,11 @@ public:
 	void Update();
 
 private:
+	Input() = default;
+	~Input() = default;
+
+	static Input* myInstance;
+
 	std::bitset<256> myTentativeState;
 	std::bitset<256> myCurrentState;
 	std::bitset<256> myPreviousState;

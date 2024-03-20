@@ -5,3 +5,16 @@
 #include "CBuffer.hpp"
 #include "SRV.h"
 #include "Sampler.h"
+
+struct ModelData
+{
+	VertexBuffer myVertexBuffer;
+	IndexBuffer myIndexBuffer;
+	InputLayout myInputLayout;
+};
+
+struct TextureData
+{
+	SRV mySRV;
+	Sampler mySampler;
+};

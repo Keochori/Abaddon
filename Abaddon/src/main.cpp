@@ -9,6 +9,9 @@
 
 #include "Tools/Input.h"
 
+#include "imgui.h"
+#include "ImGui/ImGuiBuilder.h"
+
 #pragma warning(disable : 28251)
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -114,6 +117,16 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 	std::shared_ptr<Scene> scene = std::make_shared<Scene>(renderer);
 	scene->Init();
 
+	// ImGui
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO();
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // IF using Docking Branch
+	ImGui_ImplWin32_Init(hwnd);
+	ImGui_ImplDX11_Init(DX11::ourDevice.Get(), DX11::ourContext.Get());
+
 	// Loop
 	bool running = true;
 	MSG msg = { };
@@ -130,16 +143,30 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 				consoleStream = nullptr;
 				delete consoleStream;
 
+				ImGui_ImplDX11_Shutdown();
+				ImGui_ImplWin32_Shutdown();
+				ImGui::DestroyContext();
+
 				running = false;
+				return 0;
 			}
 		}
 
 		framework.BeginFrame(clearColor);
 		Input::GetInstance().Update();
 
+		ImGui_ImplDX11_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
+		ImGui::ShowDemoWindow();
+
 		// Game loop --------------
 		scene->Update();
 		// ------------------------
+
+		ImGui::Render();
+		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
 		framework.EndFrame();
 	}
 
@@ -148,6 +175,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// ImGui
+	extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	if (ImGui_ImplWin32_WndProcHandler(hwnd, uMsg, wParam, lParam))
+		return true;
+
 	Input::GetInstance().UpdateEvents(uMsg, wParam, lParam);
 
 	switch (uMsg)

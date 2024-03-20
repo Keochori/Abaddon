@@ -8,22 +8,27 @@ workspace "Abaddon"
         "Dist"
     }
 
+    TargetDir = "bin/%{cfg.buildcfg}"
+    ObjectDir = "bin-int/%{cfg.buildcfg}"
+    
+group "Dependencies" 
+    include "vendor/ImGui"
+group ""
+    
 project "Abaddon"
     location "Abaddon"
     kind "WindowedApp"
     language "C++"
     cppdialect "C++20"
-
+    
     pchheader "pch.h"
 	pchsource "Abaddon/src/pch.cpp"
-    
-    TargetDir = "bin/%{cfg.buildcfg}"
-    ObjectDir = "bin-int/%{cfg.buildcfg}"
+
     AssimpDLL = "Abaddon/vendor/Assimp/assimp-vc143-mt.dll"
     
     targetdir (TargetDir)
     objdir (ObjectDir)
-
+    
     postbuildcommands { "{COPYFILE} %[" .. AssimpDLL ..  "] %[" .. TargetDir .. "]" }
 
     defines {
@@ -35,7 +40,8 @@ project "Abaddon"
         "d3d11.lib",
         "D3DCompiler.lib",
         "lib/DirectXTex.lib",
-        "lib/assimp-vc143-mt.lib"
+        "lib/assimp-vc143-mt.lib",
+        "ImGui"
     }
     
     files {
@@ -53,7 +59,8 @@ project "Abaddon"
 
     includedirs {
         "%{prj.name}/src",
-        "%{prj.name}/vendor"
+        "%{prj.name}/vendor",
+        "vendor/ImGui"
     }
 
     -- Shader options

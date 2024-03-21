@@ -12,6 +12,7 @@ public:
 
 	void Initialize(bool aDebugMode);
 	void BeginFrame(float aClearColor[4]);
+	void BindRenderTarget();
 	void EndFrame();
 
 	static ComPtr<ID3D11Device> ourDevice;
@@ -25,7 +26,6 @@ public:
 private:
 	void CreateRenderTargetView();
 	void CreateDepth();
-	void BindRenderTarget();
 	void SetViewPort();
 	void SetPrimitiveTopology();
 	void SetVertexShader(std::string aShaderFileName);

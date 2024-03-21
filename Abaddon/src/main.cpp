@@ -118,12 +118,13 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 	scene->Init();
 
 	// ImGui
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO();
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // IF using Docking Branch
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
 	ImGui_ImplWin32_Init(hwnd);
 	ImGui_ImplDX11_Init(DX11::ourDevice.Get(), DX11::ourContext.Get());
 
@@ -152,20 +153,29 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 			}
 		}
 
-		framework.BeginFrame(clearColor);
-		Input::GetInstance().Update();
-
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 		ImGui::ShowDemoWindow();
 
+		ImGui::Render();
+		// Re-bind Target after ImGui changes it (I think)
+		framework.BindRenderTarget();
+
+		framework.BeginFrame(clearColor);
+		Input::GetInstance().Update();
+
 		// Game loop --------------
 		scene->Update();
 		// ------------------------
 
-		ImGui::Render();
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
+		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+		{
+			ImGui::UpdatePlatformWindows();
+			ImGui::RenderPlatformWindowsDefault();
+		}
 
 		framework.EndFrame();
 	}
@@ -198,6 +208,16 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			EndPaint(hwnd, &ps);
 		}
 		return 0;
+
+		case WM_DPICHANGED:
+			if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DpiEnableScaleViewports)
+			{
+				//const int dpi = HIWORD(wParam);
+				//printf("WM_DPICHANGED to %d (%.0f%%)\n", dpi, (float)dpi / 96.0f * 100.0f);
+				const RECT* suggested_rect = (RECT*)lParam;
+				::SetWindowPos(hwnd, nullptr, suggested_rect->left, suggested_rect->top, suggested_rect->right - suggested_rect->left, suggested_rect->bottom - suggested_rect->top, SWP_NOZORDER | SWP_NOACTIVATE);
+			}
+			break;
 
 	}
 	return DefWindowProc(hwnd, uMsg, wParam, lParam);

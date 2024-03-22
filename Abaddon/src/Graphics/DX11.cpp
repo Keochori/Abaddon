@@ -9,7 +9,7 @@ ComPtr<ID3D11DeviceContext> DX11::ourContext;
 ComPtr<ID3D11RenderTargetView> DX11::ourBackBuffer;
 ComPtr<ID3D11DepthStencilView> DX11::ourDepthBuffer;
 
-DX11::DX11(HWND& aWindowHandle) : myWindowHandle(aWindowHandle)
+DX11::DX11(HWND& aHWND) : myHWND(aHWND)
 {
 }
 
@@ -27,7 +27,7 @@ void DX11::Initialize(bool aDebugMode)
 	desc.SampleDesc.Quality = 0;
 	desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	desc.BufferCount = 1;
-	desc.OutputWindow = myWindowHandle;
+	desc.OutputWindow = myHWND;
 	desc.Windowed = TRUE;
 	desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	desc.Flags = 0;
@@ -188,7 +188,7 @@ void DX11::SetPixelShader(std::string aShaderFileName)
 int DX11::GetScreenWidth()
 {
 	RECT rect;
-	GetClientRect(myWindowHandle, &rect);
+	GetClientRect(myHWND, &rect);
 
 	return rect.right - rect.left;
 }
@@ -196,7 +196,7 @@ int DX11::GetScreenWidth()
 int DX11::GetScreenHeight()
 {
 	RECT rect;
-	GetClientRect(myWindowHandle, &rect);
+	GetClientRect(myHWND, &rect);
 
 	return rect.bottom - rect.top;
 }

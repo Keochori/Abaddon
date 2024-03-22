@@ -9,6 +9,9 @@ class Camera;
 class Renderer
 {
 public:
+	Renderer() = default;
+	~Renderer() = default;
+
 	void Init();
 	void Render(ModelData& aModelData, TextureData& aTextureData, Transform& aTransform, std::shared_ptr<Camera> aCamera);
 

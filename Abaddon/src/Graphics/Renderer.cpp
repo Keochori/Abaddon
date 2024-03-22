@@ -4,6 +4,8 @@
 #include "Scene/Transform.h"
 #include "Scene/Camera.h"
 
+#define DegToRadFactor 0.01745329251f
+
 void Renderer::Init()
 {
 	myCBufferTransform.Init(eBindType::VertexShader);
@@ -21,6 +23,8 @@ void Renderer::Render(ModelData& aModelData, TextureData& aTextureData, Transfor
 	aTextureData.mySampler.Bind();
 
 	// Set transform
+	aTransform.myRotation *= DegToRadFactor;
+
 	myCBufferTransform.myData.myTransformation =
 		DirectX::XMMatrixTranspose(
 			DirectX::XMMatrixRotationRollPitchYaw(aTransform.myRotation.x, aTransform.myRotation.y, aTransform.myRotation.z) *

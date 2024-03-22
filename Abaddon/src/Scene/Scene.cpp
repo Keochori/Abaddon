@@ -1,12 +1,14 @@
 #include "pch.h"
 #include "Scene.h"
-#include "Components/Components.h"
-#include "ModelAssetHandler.h"
+#include "Graphics/Renderer.h"
 #include "Entity.h"
 
+#include "ModelAssetHandler.h"
+
+#include "Components/Components.h"
 #include "Scene/Scripts/PlayerMovement.h"
 
-Scene::Scene(Renderer& aRenderer) : myRenderer(aRenderer)
+Scene::Scene(std::shared_ptr<Renderer> aRenderer) : myRenderer(aRenderer)
 {
 }
 
@@ -28,8 +30,16 @@ void Scene::Init()
 
 	ModelAssetHandler::LoadModel("gremlin.fbx");
 	ModelAssetHandler::LoadTexture("gremlin.jpg");
+	ModelAssetHandler::LoadModel("chest.fbx");
+	ModelAssetHandler::LoadTexture("chest.jpg");
+
 	Entity obj = CreateEntity();
 	obj.AddComponent<ScriptComponent>().Bind<PlayerMovement>();
+
+	Entity obj2 = CreateEntity();
+	obj2.GetComponent<ModelComponent>().myModelName = "chest.fbx";
+	obj2.GetComponent<ModelComponent>().myTextureName = "chest.jpg";
+	obj2.GetComponent<TransformComponent>().myTransform.myScale = { 0.3f,0.3f,0.3f };
 }
 
 void Scene::Update()
@@ -43,7 +53,7 @@ void Scene::Update()
 
 		ModelData& modelData = ModelAssetHandler::GetModelData(std::get<1>(object).myModelName);
 		TextureData& textureData = ModelAssetHandler::GetTextureData(std::get<1>(object).myTextureName);
-		myRenderer.Render(modelData, textureData, std::get<0>(object).myTransform, myCamera);
+		myRenderer->Render(modelData, textureData, std::get<0>(object).myTransform, myCamera);
 	}
 
 	myRegistry.view<ScriptComponent>().each([=](entt::entity aEntity, ScriptComponent& aScriptComponent)

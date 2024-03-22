@@ -12,12 +12,12 @@ workspace "Abaddon"
     ObjectDir = "bin-int/%{cfg.buildcfg}"
     
 group "Dependencies" 
-    include "vendor/ImGui"
+    include "vendor/external/ImGui"
 group ""
     
 project "Abaddon"
     location "Abaddon"
-    kind "WindowedApp"
+    kind "ConsoleApp"
     language "C++"
     cppdialect "C++20"
     
@@ -60,7 +60,7 @@ project "Abaddon"
     includedirs {
         "%{prj.name}/src",
         "%{prj.name}/vendor",
-        "vendor/ImGui"
+        "vendor"
     }
 
     -- Shader options

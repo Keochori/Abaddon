@@ -7,7 +7,7 @@ using namespace Microsoft::WRL;
 class DX11
 {
 public:
-	DX11(HWND& aWindowHandle);
+	DX11(HWND& aHWND);
 	~DX11() = default;
 
 	void Initialize(bool aDebugMode);
@@ -34,6 +34,6 @@ private:
 	int GetScreenWidth();
 	int GetScreenHeight();
 
-	HWND& myWindowHandle;
+	HWND& myHWND;
 };
 

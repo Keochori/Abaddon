@@ -3,12 +3,14 @@
 #include "EnTT/entt.hpp"
 #include "Graphics/Renderer.h"
 
+class Renderer;
 class Entity;
+struct ScriptComponent;
 
 class Scene
 {
 public:
-	Scene(Renderer& aRenderer);
+	Scene(std::shared_ptr<Renderer> aRenderer);
 	~Scene();
 
 	void Init();
@@ -21,8 +23,7 @@ public:
 private:
 	friend class Entity;
 
-	Renderer& myRenderer;
+	std::shared_ptr<Renderer> myRenderer;
 	std::shared_ptr<Camera> myCamera;
 	entt::registry myRegistry;
 };
-

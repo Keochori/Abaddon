@@ -6,7 +6,10 @@
 #include "Scene/Scene.h"
 #include "Tools/Input.h"
 
-#include "ImGui/ImGui.h"
+#ifdef enableImGui
+#include "ImGuiManager/ImGuiManager.h"
+#endif
+
 
 Engine::Engine(HWND& aHWND) : myHWND(aHWND)
 {}
@@ -25,16 +28,11 @@ void Engine::Init()
 	myScene = std::make_shared<Scene>(myRenderer);
 	myScene->Init();
 
+#ifdef enableImGui
 	// ImGui
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
-	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
-	ImGui_ImplWin32_Init(myHWND);
-	ImGui_ImplDX11_Init(DX11::ourDevice.Get(), DX11::ourContext.Get());
+	myImGui = std::make_shared<ImGuiManager>(myHWND);
+	myImGui->Init();
+#endif
 }
 
 void Engine::Update()
@@ -48,33 +46,27 @@ void Engine::Update()
 	EndFrame();
 }
 
-void Engine::UpdateImGui()
-{
-	ImGui::ShowDemoWindow();
-}
-
 void Engine::BeginFrame()
 {
-	ImGui_ImplDX11_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
-	UpdateImGui();
-	ImGui::Render();
+#ifdef enableImGui
+		myImGui->BeginFrame();
+#endif
 
 	myFramework->BindRenderTarget();
 	myFramework->BeginFrame(myClearColor);
 	Input::GetInstance().Update();
+
+#ifdef enableImGui
+		DX11::BindRenderTargetTexture();
+#endif
 }
 
 void Engine::EndFrame()
 {
-	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-
-	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-	{
-		ImGui::UpdatePlatformWindows();
-		ImGui::RenderPlatformWindowsDefault();
-	}
+#ifdef enableImGui
+		DX11::BindRenderTarget();
+		myImGui->EndFrame();
+#endif
 
 	myFramework->EndFrame();
 }

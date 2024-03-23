@@ -4,6 +4,10 @@ class DX11;
 class Renderer;
 class Scene;
 
+#ifdef enableImGui
+class ImGuiManager;
+#endif
+
 class Engine
 {
 public:
@@ -12,9 +16,9 @@ public:
 
 	void Init();
 	void Update();
-	void UpdateImGui();
 	void BeginFrame();
 	void EndFrame();
+
 
 private:
 	HWND& myHWND;
@@ -22,7 +26,10 @@ private:
 	std::shared_ptr<Renderer> myRenderer;
 	std::shared_ptr<Scene> myScene;
 
+#ifdef enableImGui
+	std::shared_ptr<ImGuiManager> myImGui;
+#endif
+
 	float myClearColor[4] = { 0.3f,0.4f,0.6f,1.0f };
-	bool created = false;
 };
 

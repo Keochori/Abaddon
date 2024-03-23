@@ -35,17 +35,17 @@ Window::Window() : myHInstance(GetModuleHandle(nullptr))
 	// Create the window.
 	HWND hwnd = CreateWindowEx(
 		0,                              // Optional window styles.
-		className,                     // Window class
-		L"Abaddon",    // Window text
+		className,						// Window class
+		L"Abaddon",						// Window text
 		WS_OVERLAPPEDWINDOW,            // Window style
 
 		// Size and position
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 
-		NULL,       // Parent window    
-		NULL,       // Menu
-		myHInstance,  // Instance handle
-		NULL        // Additional application data
+		NULL,							// Parent window    
+		NULL,							// Menu
+		myHInstance,					// Instance handle
+		NULL							// Additional application data
 	);
 
 	if (hwnd == NULL)
@@ -57,10 +57,10 @@ Window::Window() : myHInstance(GetModuleHandle(nullptr))
 	myHWND = hwnd;
 
 	// Set window position and size
-	int width = 1366;
-	int height = 768;
+	int width = 1500;
+	int height = 902;
 
-	SetWindowPos(hwnd, nullptr, 200, 200, width, height, 0);
+	SetWindowPos(hwnd, nullptr, 190, 80, width, height, 0);
 	ShowWindow(hwnd, SW_SHOW);
 }
 
@@ -107,11 +107,13 @@ HWND& Window::GetHWND()
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+#ifdef enableImGui
 	// ImGui
 	extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	if (ImGui_ImplWin32_WndProcHandler(hwnd, uMsg, wParam, lParam))
 		return true;
-
+#endif
+	
 	Input::GetInstance().UpdateEvents(uMsg, wParam, lParam);
 
 	switch (uMsg)

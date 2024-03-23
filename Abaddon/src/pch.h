@@ -16,3 +16,7 @@ static std::wstring AddStringsReturnWStr(const std::string aString1, const std::
 
 	return newWString;
 }
+
+// Defines
+#define enableImGui
+#define enableAssert

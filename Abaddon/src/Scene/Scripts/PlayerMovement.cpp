@@ -9,7 +9,6 @@ void PlayerMovement::Start()
 
 void PlayerMovement::OnDestroy()
 {
-	LOG("Script Destroyed");
 }
 
 void PlayerMovement::Update()

@@ -53,7 +53,8 @@ void ImGuiManager::EndFrame()
 void ImGuiManager::SceneTab()
 {
 	ImGui::Begin("Scene");
-	ImGui::Image((void*)DX11::ourTextureSRV.Get(), ImGui::GetWindowSize());
+	ImVec2 textureSizeCorrected = ImVec2{ ImGui::GetWindowSize().x, ImGui::GetWindowSize().y - 35 };
+	ImGui::Image((void*)DX11::ourTextureSRV.Get(), textureSizeCorrected);
 	ImGui::End();
 }
 

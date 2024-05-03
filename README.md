@@ -1,4 +1,4 @@
-**Instructions:**
+**How to run Abaddon:**
 1. Download the project.
 2. Run "GenerateProjects.bat" to generate the solution.
 3. Open and compile the solution.

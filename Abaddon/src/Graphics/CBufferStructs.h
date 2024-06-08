@@ -6,4 +6,5 @@ __declspec(align(16))
 struct TransformBuffer
 {
 	DirectX::XMMATRIX myTransformation;
+	DirectX::XMMATRIX myBoneData[128];
 };

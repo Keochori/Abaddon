@@ -44,5 +44,6 @@ struct ModelComponent
 
 	std::string myModelName;
 	std::string myTextureName;
+	std::string myAnimationName;
 };
 

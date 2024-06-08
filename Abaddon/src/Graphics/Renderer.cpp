@@ -33,6 +33,9 @@ void Renderer::Render(ModelData& aModelData, TextureData& aTextureData, Transfor
 			aCamera->GetMatrix() *
 			DirectX::XMMatrixPerspectiveFovLH(1.0f, 16.0f / 9.0f, 0.1f, 1000.0f)
 		);
+
+	memcpy_s(&myCBufferTransform.myData.myBoneData[0], sizeof(DirectX::XMMATRIX) * 128, aModelData.GetBoneTransforms(), sizeof(DirectX::XMMATRIX) * 128);
+
 	myCBufferTransform.ApplyChanges();
 	myCBufferTransform.Bind();
 

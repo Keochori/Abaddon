@@ -5,6 +5,7 @@
 #include "../Resources/resource.h"
 #include <filesystem>
 #include "Tools/Input.h"
+#include "Tools/Timer.h"
 
 #include "ImGui/ImGui.h"
 
@@ -115,6 +116,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 #endif
 	
 	Input::GetInstance().UpdateEvents(uMsg, wParam, lParam);
+	Timer::GetInstance().Update();
 
 	switch (uMsg)
 	{

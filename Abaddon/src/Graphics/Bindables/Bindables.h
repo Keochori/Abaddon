@@ -42,10 +42,6 @@ struct ModelData
 	{
 		addBoneToArray(mySkeleton.myRootBone);
 
-		boneTransforms[0] = DirectX::XMMatrixIdentity();
-		boneTransforms[1] = DirectX::XMMatrixIdentity();
-		boneTransforms[2] = DirectX::XMMatrixIdentity();
-		boneTransforms[3] = DirectX::XMMatrixIdentity();
 		return boneTransforms;
 	}
 

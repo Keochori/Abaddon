@@ -96,16 +96,16 @@ void ModelAssetHandler::LoadModel(std::string aModelFileName)
 				{
 					auto weight = bone->mWeights[wIndex];
 
-					Vertex vertex = vertexList[weight.mVertexId];
+					Vertex& vertex = vertexList[weight.mVertexId];
 					for (int vBoneId = 0; vBoneId < MAX_BONES; vBoneId++)
 					{
 						unsigned int currentBoneValue = vertex.myBoneIDs[vBoneId];
-						unsigned int currentWeightValue = vertex.myBoneWeights[vBoneId];
 
 						if (currentBoneValue == 0)
 						{
 							vertex.myBoneIDs[vBoneId] = bIndex;
 							vertex.myBoneWeights[vBoneId] = weight.mWeight;
+							break;
 						} 
 					}
 				}

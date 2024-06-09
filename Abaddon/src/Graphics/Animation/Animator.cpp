@@ -27,6 +27,8 @@ void Animator::Update()
 			myCurrentFrame++;
 		}
 	}
+
+	LOG(std::to_string(myCurrentFrame));
 }
 
 void Animator::UpdateBoneTransforms(Bone& aBone)

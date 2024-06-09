@@ -28,22 +28,22 @@ void Scene::Init()
 	myCamera = std::make_shared<Camera>();
 	myCamera->Init(0.9f, 0.005f);
 
-	//ModelAssetHandler::LoadModel("gremlin.fbx");
-	//ModelAssetHandler::LoadAnimation("gremlin@run.fbx");
+	ModelAssetHandler::LoadModel("gremlin.fbx");
+	ModelAssetHandler::LoadAnimation("gremlin@run.fbx");
 	ModelAssetHandler::LoadTexture("gremlin.jpg");
 
-	ModelAssetHandler::LoadModel("Angel.fbx");
-	ModelAssetHandler::LoadAnimation("Angel.fbx");
-	ModelAssetHandler::LoadTexture("chest.jpg");
+	//ModelAssetHandler::LoadModel("Angel.fbx");
+	//ModelAssetHandler::LoadAnimation("Angel.fbx");
+	//ModelAssetHandler::LoadTexture("chest.jpg");
 
 	//Entity obj = CreateEntity();
 	//obj.AddComponent<ScriptComponent>().Bind<PlayerMovement>();
 	//obj.GetComponent<TransformComponent>().myTransform.myPosition = { 1000.3f,0.3f,0.3f };
 
 	Entity obj2 = CreateEntity();
-	obj2.GetComponent<ModelComponent>().myModelName = "Angel.fbx";
+	obj2.GetComponent<ModelComponent>().myModelName = "gremlin.fbx";
 	obj2.GetComponent<ModelComponent>().myTextureName = "gremlin.jpg";
-	obj2.GetComponent<ModelComponent>().myAnimationName = "Angel.fbx";
+	obj2.GetComponent<ModelComponent>().myAnimationName = "gremlin@run.fbx";
 	//obj2.GetComponent<TransformComponent>().myTransform.myScale = { 0.3f,0.3f,0.3f };
 }
 

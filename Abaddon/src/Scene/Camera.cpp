@@ -90,6 +90,11 @@ void Camera::UpdateInput()
 		myCamYaw += Input::GetInstance().GetMouseDelta().x * myRotationSpeed;
 	}
 
+	// Speed
+	myMovementSpeed -= ((Input::GetInstance().myTentativeScrollDelta < 0) ? -1 : (Input::GetInstance().myTentativeScrollDelta > 0)) * 0.125f;
+	if (myMovementSpeed < 0.1f) myMovementSpeed = 0.1f;
+	else if (myMovementSpeed > 3.0f) myMovementSpeed = 3.0f;
+
 	// Keyboard
 	if (Input::GetInstance().IsKeyDown((int)eKeys::W))
 	{

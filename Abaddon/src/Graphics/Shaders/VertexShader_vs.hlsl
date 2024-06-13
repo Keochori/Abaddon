@@ -43,7 +43,6 @@ VS_OUTPUT main(VS_INPUT input)
 	float4 posePosition4 = mul(boneTransform4, input.position);
 	totalLocalPos += posePosition4 * input.boneweights.w;
 
-
 	output.position = mul(totalLocalPos, transformation);
 	output.texcoord = input.texcoord;
 

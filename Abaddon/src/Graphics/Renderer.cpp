@@ -3,6 +3,7 @@
 #include "Graphics/Bindables/Bindables.h"
 #include "Scene/Transform.h"
 #include "Scene/Camera.h"
+#include "Graphics/Animation/Animator.h"
 
 #define DegToRadFactor 0.01745329251f
 
@@ -42,3 +43,4 @@ void Renderer::Render(ModelData& aModelData, TextureData& aTextureData, Transfor
 	// Draw textured model
 	DX11::ourContext->DrawIndexed(aModelData.myIndexBuffer.GetIndexAmount(), 0, 0);
 }
+

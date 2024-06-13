@@ -8,6 +8,7 @@
 std::unordered_map<std::string, ModelData> ModelAssetHandler::myLoadedModels;
 std::unordered_map<std::string, Animation> ModelAssetHandler::myLoadedAnimations;
 std::unordered_map<std::string, TextureData> ModelAssetHandler::myLoadedTextures;
+std::unordered_map<std::string, int> ModelAssetHandler::names;
 
 void ModelAssetHandler::LoadModel(std::string aModelFileName)
 {
@@ -70,22 +71,17 @@ void ModelAssetHandler::LoadModel(std::string aModelFileName)
 			skeleton->myBoneAmount = mesh->mNumBones;
 
 			skeleton->myRootBone.myId = 0;
-			skeleton->myRootBone.myName = mesh->mBones[0]->mName.C_Str();
-			aiMatrix4x4 t = mesh->mBones[0]->mArmature->mTransformation.Inverse();
-			skeleton->myRootBone.myInverseBindTransform = DirectX::XMMatrixSet
-			(t.a1, t.a2, t.a3, t.a4,
-				t.b1, t.b2, t.b3, t.b4,
-				t.c1, t.c2, t.c3, t.c4,
-				t.d1, t.d2, t.d3, t.d4);
-
-			std::unordered_map<std::string, int> names;
+			skeleton->myRootBone.myName = mesh->mBones[0]->mNode->mParent->mName.C_Str();
+			skeleton->myRootBone.myInverseBindTransform = DirectX::XMMatrixIdentity();
+			skeleton->myRootBone.myAnimatedTransform = DirectX::XMMatrixIdentity();
+			skeleton->myRootBone.myResultTranform = DirectX::XMMatrixIdentity();
 
 			for (int i = 0; i < mesh->mNumBones; i++)
 			{
 				names.insert({ mesh->mBones[i]->mName.C_Str(), 0 });
 			}
 
-			CreateBoneHierarchy(mesh, &skeleton->myRootBone, skeleton->myRootBone.myName, names);
+			CreateBoneHierarchy(mesh->mBones[0]->mNode->mParent, &skeleton->myRootBone);
 
 			// Vertex bone & weight data
 			for (int bIndex = 0; bIndex < mesh->mNumBones; bIndex++)
@@ -103,7 +99,7 @@ void ModelAssetHandler::LoadModel(std::string aModelFileName)
 
 						if (currentBoneValue == 0)
 						{
-							vertex.myBoneIDs[vBoneId] = bIndex;
+							vertex.myBoneIDs[vBoneId] = bIndex + 1;
 							vertex.myBoneWeights[vBoneId] = weight.mWeight;
 							break;
 						} 
@@ -172,6 +168,11 @@ void ModelAssetHandler::LoadAnimation(std::string aAnimationFileName)
 			pose.myPosition.x = channel->mPositionKeys[currentFrame].mValue.x;
 			pose.myPosition.y = channel->mPositionKeys[currentFrame].mValue.y;
 			pose.myPosition.z = channel->mPositionKeys[currentFrame].mValue.z;
+
+			pose.myQuaternionTest.x = channel->mRotationKeys[currentFrame].mValue.x;
+			pose.myQuaternionTest.z = channel->mRotationKeys[currentFrame].mValue.y;
+			pose.myQuaternionTest.y = channel->mRotationKeys[currentFrame].mValue.z;
+			pose.myQuaternionTest.w = channel->mRotationKeys[currentFrame].mValue.w;
 
 			pose.myRotation.x = channel->mRotationKeys[currentFrame].mValue.x;
 			pose.myRotation.y = channel->mRotationKeys[currentFrame].mValue.y;
@@ -243,41 +244,50 @@ Animation& ModelAssetHandler::GetAnimation(std::string aAnimationFileName)
 	return myLoadedAnimations.at(aAnimationFileName);
 }
 
-int ModelAssetHandler::currentBoneIndex = 0;
+int ModelAssetHandler::currentBoneIndex = 1;
 
-void ModelAssetHandler::CreateBoneHierarchy(aiMesh* aMesh, Bone* aBone, std::string firstName, std::unordered_map<std::string, int> aNames)
+void ModelAssetHandler::CreateBoneHierarchy(aiNode* aNode, Bone* aBone)
 {
-	if (currentBoneIndex == aMesh->mNumBones - 1)
+	for (int i = 0; i < aNode->mNumChildren; i++)
 	{
-		currentBoneIndex = 0;
-		return;
-	}
+		aiNode* child = aNode->mChildren[i];
 
-	if (aNames.find(aMesh->mBones[currentBoneIndex]->mNode->mChildren[0]->mName.C_Str()) == aNames.end())
-	{
-		return;
-	}
-
-	int numChildren = aMesh->mBones[currentBoneIndex]->mNode->mNumChildren;
-	for (int i = 0; i < numChildren; i++)
-	{
-		aiBone* child = aMesh->mBones[currentBoneIndex + 1];
+		if (names.find(child->mName.C_Str()) == names.end())
+		{
+			CreateBoneHierarchy(child, aBone);
+			continue;
+		}
 
 		Bone bone;
 		bone.myName = child->mName.C_Str();
 		bone.myId = currentBoneIndex;
 		currentBoneIndex++;
 
-		aiMatrix4x4 t = child->mNode->mTransformation.Inverse();
-		bone.myInverseBindTransform = DirectX::XMMatrixSet
-			(t.a1, t.a2, t.a3, t.a4,
+		aiMatrix4x4 t = child->mTransformation.Inverse();
+		bone.myInverseBindTransform = DirectX::XMMatrixSet(
+			t.a1, t.a2, t.a3, t.a4,
 			t.b1, t.b2, t.b3, t.b4,
 			t.c1, t.c2, t.c3, t.c4,
 			t.d1, t.d2, t.d3, t.d4);
 
 		aBone->myChildren.push_back(bone);
-
-
-		CreateBoneHierarchy(aMesh, &aBone->myChildren[i], firstName, aNames);
+		CreateBoneHierarchy(child, &aBone->myChildren[i]);
 	}
 }
+
+aiNode* ModelAssetHandler::GetPreRotation(aiNode* aNode)
+{
+	if (std::string(aNode->mParent->mName.C_Str()).find("PreRotation") != std::string::npos)
+	{
+		return aNode->mParent;
+	}
+
+	if (std::string(aNode->mParent->mName.C_Str()).find("Rotation") != std::string::npos)
+	{
+		return aNode->mParent->mParent;
+	}
+
+	return aNode;
+}
+
+

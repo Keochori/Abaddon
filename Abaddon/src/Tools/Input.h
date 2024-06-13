@@ -264,6 +264,7 @@ public:
 	bool UpdateEvents(UINT message, WPARAM wParam, LPARAM lParam);
 	void Update();
 
+	short myTentativeScrollDelta;
 private:
 	Input() = default;
 	~Input() = default;

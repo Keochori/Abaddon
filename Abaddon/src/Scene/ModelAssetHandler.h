@@ -3,7 +3,7 @@
 #include <unordered_map>
 #include "Graphics/Animation/Animator.h"
 
-struct aiMesh;
+struct aiNode;
 
 class ModelAssetHandler
 {
@@ -17,10 +17,12 @@ public:
 	static Animation& GetAnimation(std::string aAnimationFileName);
 
 private:
-	static void CreateBoneHierarchy(aiMesh* aMesh, Bone* aBone, std::string firstName, std::unordered_map<std::string, int> aNames);
+	static void CreateBoneHierarchy(aiNode* aNode, Bone* aBone);
+	static aiNode* GetPreRotation(aiNode* aNode);
 	static std::unordered_map<std::string, ModelData>  myLoadedModels;
 	static std::unordered_map<std::string, Animation>  myLoadedAnimations;
 	static std::unordered_map<std::string, TextureData>  myLoadedTextures;
 	static int currentBoneIndex;
+	static std::unordered_map<std::string, int> names;
 };
 

@@ -26,11 +26,14 @@ Scene::~Scene()
 void Scene::Init()
 {
 	myCamera = std::make_shared<Camera>();
-	myCamera->Init(0.9f, 0.005f);
+	myCamera->Init(1.0f, 0.005f);
 
-	ModelAssetHandler::LoadModel("gremlin.fbx");
-	ModelAssetHandler::LoadAnimation("gremlin@run.fbx");
+	//ModelAssetHandler::LoadModel("gremlin.fbx");
+	ModelAssetHandler::LoadModel("BingusGenerator6.fbx");
+	//ModelAssetHandler::LoadAnimation("gremlin@run.fbx");
+	ModelAssetHandler::LoadAnimation("BingusGenerator6.fbx");
 	ModelAssetHandler::LoadTexture("gremlin.jpg");
+	ModelAssetHandler::LoadTexture("crystal.jpg");
 
 	//ModelAssetHandler::LoadModel("Angel.fbx");
 	//ModelAssetHandler::LoadAnimation("Angel.fbx");
@@ -41,10 +44,12 @@ void Scene::Init()
 	//obj.GetComponent<TransformComponent>().myTransform.myPosition = { 1000.3f,0.3f,0.3f };
 
 	Entity obj2 = CreateEntity();
-	obj2.GetComponent<ModelComponent>().myModelName = "gremlin.fbx";
+	//obj2.GetComponent<ModelComponent>().myModelName = "gremlin.fbx";
+	obj2.GetComponent<ModelComponent>().myModelName = "BingusGenerator6.fbx";
 	obj2.GetComponent<ModelComponent>().myTextureName = "gremlin.jpg";
-	obj2.GetComponent<ModelComponent>().myAnimationName = "gremlin@run.fbx";
-	//obj2.GetComponent<TransformComponent>().myTransform.myScale = { 0.3f,0.3f,0.3f };
+	obj2.GetComponent<ModelComponent>().myAnimationName = "BingusGenerator6.fbx";
+	//obj2.GetComponent<ModelComponent>().myAnimationName = "gremlin@run.fbx";
+	//obj2.GetComponent<TransformComponent>().myTransform.myPosition = { 100.3f,0.3f,0.3f };
 }
 
 void Scene::Update()

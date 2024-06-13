@@ -40,6 +40,11 @@ struct ModelData
 
 	DirectX::XMMATRIX* GetBoneTransforms()
 	{
+		for (int i = 0; i < 128; i++)
+		{
+			boneTransforms[i] = DirectX::XMMatrixIdentity();
+		}
+
 		addBoneToArray(mySkeleton.myRootBone);
 
 		return boneTransforms;

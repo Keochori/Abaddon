@@ -108,6 +108,10 @@ bool Input::UpdateEvents(UINT message, WPARAM wParam, LPARAM lParam)
 			myTentativeMousePos.y = HIWORD(lParam);
 			return true;
 
+		case WM_MOUSEWHEEL:
+			myTentativeScrollDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+			return true;
+
 	}
 }
 

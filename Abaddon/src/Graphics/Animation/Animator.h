@@ -31,8 +31,8 @@ public:
 	DirectX::XMMATRIX TransformToMatrix(Transform aTransform);
 	bool inited = false;
 
-private:
 	Animation myCurrentAnim;
+private:
 	Skeleton* mySkeleton;
 	float myTimer = 0;
 	int myCurrentFrame = 0;

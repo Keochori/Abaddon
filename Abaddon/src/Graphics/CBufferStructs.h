@@ -5,7 +5,9 @@
 __declspec(align(16))
 struct TransformBuffer
 {
-	DirectX::XMMATRIX myTransformation;
+	DirectX::XMMATRIX myTransformationMatrix;
+	DirectX::XMMATRIX myViewMatrix;
+	DirectX::XMMATRIX myProjectionMatrix;
 };
 
 __declspec(align(16))

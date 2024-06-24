@@ -16,13 +16,20 @@ struct VS_OUTPUT
 
 cbuffer transformBuffer: register(b0) 
 {
-	float4x4 transformation;
+	float4x4 transformationMatrix;
+	float4x4 viewMatrix;
+	float4x4 projectionMatrix;
 };
 
 VS_OUTPUT main(VS_INPUT input)
 {
 	VS_OUTPUT output = (VS_OUTPUT)0;
-	output.position = mul(input.position, transformation);
+
+	float4 worldPosition = mul(transformationMatrix, input.position);
+	float4 viewPosition = mul(viewMatrix, worldPosition);
+	float4 projectionPosition = mul(projectionMatrix, viewPosition);	
+
+	output.position = projectionPosition;
 	output.texcoord = input.texcoord;	
 	output.boneids = input.boneids;
 	output.boneweights = input.boneweights;

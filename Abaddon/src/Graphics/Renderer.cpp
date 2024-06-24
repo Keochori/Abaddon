@@ -23,18 +23,18 @@ void Renderer::Render(ModelData& aModelData, TextureData& aTextureData, Transfor
 	aTextureData.mySRV.Bind();
 	aTextureData.mySampler.Bind();
 
-	// Set transform
+	// Convert rotation from degrees to radians
 	aTransform.myRotation *= DegToRadFactor;
 
 	// Transformation buffer
-	myCBufferTransform.myData.myTransformation =
-		DirectX::XMMatrixTranspose(
+	myCBufferTransform.myData.myTransformationMatrix =
 			DirectX::XMMatrixRotationRollPitchYaw(aTransform.myRotation.x, aTransform.myRotation.y, aTransform.myRotation.z) *
 			DirectX::XMMatrixTranslation(aTransform.myPosition.x, aTransform.myPosition.y, aTransform.myPosition.z) *
-			DirectX::XMMatrixScaling(aTransform.myScale.x, aTransform.myScale.y, aTransform.myScale.z) *
-			aCamera->GetMatrix() *
-			DirectX::XMMatrixPerspectiveFovLH(1.0f, 16.0f / 9.0f, 0.1f, 1000.0f)
-		);
+			DirectX::XMMatrixScaling(aTransform.myScale.x, aTransform.myScale.y, aTransform.myScale.z);
+
+	myCBufferTransform.myData.myViewMatrix = aCamera->GetMatrix();
+	myCBufferTransform.myData.myProjectionMatrix = DirectX::XMMatrixPerspectiveFovLH(1.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
+
 	myCBufferTransform.ApplyChanges();
 	myCBufferTransform.Bind();
 

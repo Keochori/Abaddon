@@ -8,6 +8,13 @@ class Scene;
 class ImGuiManager;
 #endif
 
+enum eDebugMode
+{
+	Null = 1,
+	Wireframe = 2,
+	BoneWeights = 3,
+};
+
 class Engine
 {
 public:
@@ -21,6 +28,11 @@ public:
 
 
 private:
+	// Debug stuff
+	void UpdateDebugModeInput();
+	eDebugMode myDebugMode = eDebugMode::Null;
+	int myBoneId = 1;
+
 	HWND& myHWND;
 	std::shared_ptr<DX11> myFramework;
 	std::shared_ptr<Renderer> myRenderer;

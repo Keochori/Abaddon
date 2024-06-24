@@ -7,3 +7,10 @@ struct TransformBuffer
 {
 	DirectX::XMMATRIX myTransformation;
 };
+
+__declspec(align(16))
+struct DebugBuffer
+{
+	unsigned int myDebugMode;
+	unsigned int myBoneId;
+};

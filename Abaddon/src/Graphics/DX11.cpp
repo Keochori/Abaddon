@@ -10,6 +10,7 @@ ComPtr<ID3D11DepthStencilView> DX11::ourDepthBuffer;
 ComPtr<ID3D11ShaderResourceView> DX11::ourTextureSRV;
 ComPtr<ID3D11RenderTargetView> DX11::ourTextureBuffer;
 ComPtr<ID3D11Texture2D> DX11::ourTexture;
+ComPtr<ID3D11RasterizerState> DX11::ourWireframeRS;
 
 DX11::DX11(HWND& aHWND) : myHWND(aHWND)
 {
@@ -53,6 +54,7 @@ void DX11::Initialize(bool aDebugMode)
 	CreateRenderTargetView();
 	CreateSceneTextureResources();
 	CreateDepth();
+	CreateWireframeRasterizerState();
 	BindRenderTarget();
 	SetViewPort();
 	SetPrimitiveTopology();
@@ -143,6 +145,16 @@ void DX11::CreateDepth()
 	HRASSERT(hr, "Creation of Depth Stencil View");
 }
 
+void DX11::CreateWireframeRasterizerState()
+{
+	D3D11_RASTERIZER_DESC rasterizerDesc = {};
+	rasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
+	rasterizerDesc.CullMode = D3D11_CULL_NONE;
+	rasterizerDesc.DepthClipEnable = true;
+
+	ourDevice->CreateRasterizerState(&rasterizerDesc, &ourWireframeRS);
+}
+
 void DX11::BindRenderTarget()
 {
 	ourContext->OMSetRenderTargets(1, ourBackBuffer.GetAddressOf(), ourDepthBuffer.Get());
@@ -151,6 +163,18 @@ void DX11::BindRenderTarget()
 void DX11::BindRenderTargetTexture()
 {
 	ourContext->OMSetRenderTargets(1, ourTextureBuffer.GetAddressOf(), ourDepthBuffer.Get());
+}
+
+void DX11::ToggleWireframeRS(bool aOn)
+{
+	if (aOn)
+	{
+		ourContext->RSSetState(DX11::ourWireframeRS.Get());
+	}
+	else
+	{
+		ourContext->RSSetState(NULL);
+	}
 }
 
 void DX11::SetViewPort()

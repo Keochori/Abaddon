@@ -91,27 +91,27 @@ void Camera::UpdateInput()
 	}
 
 	// Keyboard
-	if (Input::GetInstance().IsKeyDown((int)eKeys::W))
+	if (Input::GetInstance().IsKeyHeld((int)eKeys::W))
 	{
 		myInputBackForward += myMovementSpeed;
 	}
-	if (Input::GetInstance().IsKeyDown((int)eKeys::S))
+	if (Input::GetInstance().IsKeyHeld((int)eKeys::S))
 	{
 		myInputBackForward -= myMovementSpeed;
 	}
-	if (Input::GetInstance().IsKeyDown((int)eKeys::A))
+	if (Input::GetInstance().IsKeyHeld((int)eKeys::A))
 	{
 		myInputLeftRight -= myMovementSpeed;
 	}
-	if (Input::GetInstance().IsKeyDown((int)eKeys::D))
+	if (Input::GetInstance().IsKeyHeld((int)eKeys::D))
 	{
 		myInputLeftRight += myMovementSpeed;
 	}
-	if (Input::GetInstance().IsKeyDown((int)eKeys::Q))
+	if (Input::GetInstance().IsKeyHeld((int)eKeys::Q))
 	{
 		myInputUpDown -= myMovementSpeed;
 	}
-	if (Input::GetInstance().IsKeyDown((int)eKeys::E))
+	if (Input::GetInstance().IsKeyHeld((int)eKeys::E))
 	{
 		myInputUpDown += myMovementSpeed;
 	}

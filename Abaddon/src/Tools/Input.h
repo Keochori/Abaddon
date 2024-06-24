@@ -250,7 +250,7 @@ public:
 
 	static Input& GetInstance();
 
-	bool IsKeyDown(const int aKeyCode) const;
+	bool IsKeyHeld(const int aKeyCode) const;
 	bool IsKeyPressed(const int aKeyCode) const;
 	bool IsKeyUp(const int aKeyCode) const;
 	bool IsMouseButtonDown(const int aMouseButtonCode) const;

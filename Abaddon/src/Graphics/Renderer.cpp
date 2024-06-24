@@ -9,6 +9,7 @@
 void Renderer::Init()
 {
 	myCBufferTransform.Init(eBindType::VertexShader);
+	myCBufferDebug.Init(eBindType::VsAndPs);
 }
 
 void Renderer::Render(ModelData& aModelData, TextureData& aTextureData, Transform& aTransform, std::shared_ptr<Camera> aCamera)
@@ -25,6 +26,7 @@ void Renderer::Render(ModelData& aModelData, TextureData& aTextureData, Transfor
 	// Set transform
 	aTransform.myRotation *= DegToRadFactor;
 
+	// Transformation buffer
 	myCBufferTransform.myData.myTransformation =
 		DirectX::XMMatrixTranspose(
 			DirectX::XMMatrixRotationRollPitchYaw(aTransform.myRotation.x, aTransform.myRotation.y, aTransform.myRotation.z) *
@@ -36,6 +38,29 @@ void Renderer::Render(ModelData& aModelData, TextureData& aTextureData, Transfor
 	myCBufferTransform.ApplyChanges();
 	myCBufferTransform.Bind();
 
+	// Debug Mode buffer
+	myResetBoneId = false;
+	if (myCBufferDebug.myData.myBoneId == aModelData.mySkeleton.myBoneAmount)
+		myResetBoneId = true;
+	myCBufferDebug.ApplyChanges();
+	myCBufferDebug.Bind(1);
+	LOG(std::to_string(myCBufferDebug.myData.myBoneId));
+
 	// Draw textured model
 	DX11::ourContext->DrawIndexed(aModelData.myIndexBuffer.GetIndexAmount(), 0, 0);
+}
+
+void Renderer::ChangeDebugMode(unsigned int aDebugMode)
+{
+	myCBufferDebug.myData.myDebugMode = aDebugMode;
+}
+
+void Renderer::ChangeBoneId(unsigned int aBoneId)
+{
+	myCBufferDebug.myData.myBoneId = aBoneId;
+}
+
+bool Renderer::ResetBoneId()
+{
+	return myResetBoneId;
 }

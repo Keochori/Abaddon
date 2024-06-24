@@ -2,9 +2,7 @@
 #include "Scene.h"
 #include "Graphics/Renderer.h"
 #include "Entity.h"
-
 #include "ModelAssetHandler.h"
-
 #include "Components/Components.h"
 #include "Scene/Scripts/PlayerMovement.h"
 
@@ -26,20 +24,15 @@ Scene::~Scene()
 void Scene::Init()
 {
 	myCamera = std::make_shared<Camera>();
-	myCamera->Init(0.9f, 0.005f);
+	myCamera->Init(3.0f, 0.005f);
 
-	ModelAssetHandler::LoadModel("gremlin.fbx");
-	ModelAssetHandler::LoadTexture("gremlin.jpg");
-	ModelAssetHandler::LoadModel("chest.fbx");
-	ModelAssetHandler::LoadTexture("chest.jpg");
+	ModelAssetHandler::LoadModel("pyramid.fbx");
+	ModelAssetHandler::LoadTexture("grid.jpg");
 
 	Entity obj = CreateEntity();
-	obj.AddComponent<ScriptComponent>().Bind<PlayerMovement>();
-
-	Entity obj2 = CreateEntity();
-	obj2.GetComponent<ModelComponent>().myModelName = "chest.fbx";
-	obj2.GetComponent<ModelComponent>().myTextureName = "chest.jpg";
-	obj2.GetComponent<TransformComponent>().myTransform.myScale = { 0.3f,0.3f,0.3f };
+	obj.GetComponent<ModelComponent>().myModelName = "pyramid.fbx";
+	obj.GetComponent<ModelComponent>().myTextureName = "grid.jpg";
+	obj.GetComponent<TransformComponent>().myTransform.myPosition = { 0.0f,0.0f,300.0f };
 }
 
 void Scene::Update()

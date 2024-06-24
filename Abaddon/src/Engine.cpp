@@ -24,6 +24,7 @@ void Engine::Init()
 
 	myRenderer = std::make_shared<Renderer>();
 	myRenderer->Init();
+	myRenderer->ChangeDebugMode(myDebugMode);
 
 	myScene = std::make_shared<Scene>(myRenderer);
 	myScene->Init();
@@ -37,6 +38,8 @@ void Engine::Init()
 
 void Engine::Update()
 {
+	UpdateDebugModeInput();
+
 	BeginFrame();
 	//-----------------------
 
@@ -69,4 +72,47 @@ void Engine::EndFrame()
 #endif
 
 	myFramework->EndFrame();
+}
+
+void Engine::UpdateDebugModeInput()
+{
+	bool clicked = false;
+
+	if (Input::GetInstance().IsKeyPressed((int)eKeys::F1))
+	{
+		myDebugMode = eDebugMode::Null;
+		clicked = true;
+	}
+	else if (Input::GetInstance().IsKeyPressed((int)eKeys::F2))
+	{
+		myDebugMode = eDebugMode::Wireframe;
+		DX11::ToggleWireframeRS(true);
+		clicked = true;
+	}
+	else if (Input::GetInstance().IsKeyPressed((int)eKeys::F3))
+	{
+		myDebugMode = eDebugMode::BoneWeights;
+		clicked = true;
+	}
+
+	if (clicked)
+	{
+		if (myDebugMode != eDebugMode::Wireframe)
+			DX11::ToggleWireframeRS(false);
+
+		myBoneId = 1;
+		myRenderer->ChangeBoneId(myBoneId);
+		myRenderer->ChangeDebugMode((int)myDebugMode);
+	}
+
+	if (myDebugMode == eDebugMode::BoneWeights)
+	{
+		if (Input::GetInstance().IsKeyPressed((int)eKeys::SPACE))
+		{
+			if (myRenderer->ResetBoneId())
+				myBoneId = 0;
+			myBoneId++;
+			myRenderer->ChangeBoneId(myBoneId);
+		}
+	}
 }

@@ -17,6 +17,8 @@ public:
 	static void BindRenderTarget();
 	static void BindRenderTargetTexture();
 
+	static void ToggleWireframeRS(bool aOn);
+
 	static void HRASSERT(HRESULT aHr, std::string aDescription, bool aPrint = true);
 
 	static ComPtr<ID3D11Device> ourDevice;
@@ -29,11 +31,13 @@ public:
 	static ComPtr<ID3D11ShaderResourceView> ourTextureSRV;
 	static ComPtr<ID3D11RenderTargetView> ourTextureBuffer;
 	static ComPtr<ID3D11Texture2D> ourTexture;
+	static ComPtr<ID3D11RasterizerState> ourWireframeRS;
 
 private:
 	void CreateRenderTargetView();
 	void CreateSceneTextureResources();
 	void CreateDepth();
+	void CreateWireframeRasterizerState();
 	void SetViewPort();
 	void SetPrimitiveTopology();
 	void SetVertexShader(std::string aShaderFileName);

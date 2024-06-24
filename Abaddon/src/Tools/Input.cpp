@@ -14,7 +14,7 @@ Input& Input::GetInstance()
 	return *myInstance;
 }
 
-bool Input::IsKeyDown(const int aKeyCode) const
+bool Input::IsKeyHeld(const int aKeyCode) const
 {
 	return myCurrentState[aKeyCode] && myPreviousState[aKeyCode];
 }

@@ -1,7 +1,6 @@
 #pragma once
 #include "Math/vectors.h"
-
-#define MAX_BONES 4
+#include "Animation/AnimationDefines.h"
 
 struct Vertex
 {
@@ -10,15 +9,11 @@ struct Vertex
 		myPosition = { 0,0,0,1 };
 		myTexcoord = { 0.0f,0.0f };
 
-		myBoneIDs[0] = 0;
-		myBoneIDs[1] = 0;
-		myBoneIDs[2] = 0;
-		myBoneIDs[3] = 0;
-
-		myBoneWeights[0] = 0;
-		myBoneWeights[1] = 0;
-		myBoneWeights[2] = 0;
-		myBoneWeights[3] = 0;
+		for (int i = 0; i < MAX_WEIGHTS; i++)
+		{
+			myBoneIDs[i] = -1;
+			myBoneWeights[i] = 0;
+		}
 	}
 
 	Vertex(float aX, float aY, float aZ, float aU, float aV)
@@ -31,15 +26,11 @@ struct Vertex
 		myTexcoord.x = aU;
 		myTexcoord.y = aV;
 
-		myBoneIDs[0] = 0;
-		myBoneIDs[1] = 0;
-		myBoneIDs[2] = 0;
-		myBoneIDs[3] = 0;
-
-		myBoneWeights[0] = 0;
-		myBoneWeights[1] = 0;
-		myBoneWeights[2] = 0;
-		myBoneWeights[3] = 0;
+		for (int i = 0; i < MAX_WEIGHTS; i++)
+		{
+			myBoneIDs[i] = -1;
+			myBoneWeights[i] = 0;
+		}
 	}
 
 	Vertex(math::vector3<float>& aPosition, math::vector2<float> aTexcoord)
@@ -52,19 +43,15 @@ struct Vertex
 		myTexcoord.x = aTexcoord.x;
 		myTexcoord.y = aTexcoord.y;
 
-		myBoneIDs[0] = 0;
-		myBoneIDs[1] = 0;
-		myBoneIDs[2] = 0;
-		myBoneIDs[3] = 0;
-
-		myBoneWeights[0] = 0;
-		myBoneWeights[1] = 0;
-		myBoneWeights[2] = 0;
-		myBoneWeights[3] = 0;
+		for (int i = 0; i < MAX_WEIGHTS; i++)
+		{
+			myBoneIDs[i] = -1;
+			myBoneWeights[i] = 0;
+		}
 	}
 
 	math::vector4<float> myPosition;
 	math::vector2<float> myTexcoord;
-	unsigned int myBoneIDs[MAX_BONES];
-	float myBoneWeights[MAX_BONES];
+	int myBoneIDs[MAX_WEIGHTS];
+	float myBoneWeights[MAX_WEIGHTS];
 };

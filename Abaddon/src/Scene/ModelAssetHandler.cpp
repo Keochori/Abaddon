@@ -1,13 +1,20 @@
 #include "pch.h"
 #include "ModelAssetHandler.h"
-#include "Assimp/Importer.hpp"
-#include "Assimp/scene.h"
-#include "Assimp/postprocess.h"
 #include <DirectXMath.h>
 #include <algorithm>
 
 std::unordered_map<std::string, ModelData> ModelAssetHandler::myLoadedModels;
 std::unordered_map<std::string, TextureData> ModelAssetHandler::myLoadedTextures;
+std::unordered_map<std::string, Animation> ModelAssetHandler::myLoadedAnimations;
+const aiScene* ModelAssetHandler::myData;
+std::string ModelAssetHandler::myModelName;
+Assimp::Importer ModelAssetHandler::importer;
+
+Animation ModelAssetHandler::myCurrentAnim;
+Skeleton* ModelAssetHandler::mySkeleton;
+int ModelAssetHandler::myCurrentFrame = 0;
+float ModelAssetHandler::myTimer = 0;
+bool ModelAssetHandler::inited = false;
 
 void ModelAssetHandler::LoadModel(std::string aModelFileName)
 {
@@ -20,8 +27,8 @@ void ModelAssetHandler::LoadModel(std::string aModelFileName)
 	}
 
 	// Load file
-	Assimp::Importer importer;
 	auto data = importer.ReadFile("Models/" + aModelFileName, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_PopulateArmatureData | aiProcess_LimitBoneWeights);
+	myData = data;
 	if (!data)
 	{
 		LOG_ERROR("Failed to load model '" + aModelFileName + "'");
@@ -64,24 +71,32 @@ void ModelAssetHandler::LoadModel(std::string aModelFileName)
 		// Skeleton
 		if (mesh->HasBones())
 		{
-			Skeleton skeleton;
+			modelData.myHasSkeleton = true;
+
+			Skeleton& skeleton = modelData.mySkeleton;
 			skeleton.myName = aModelFileName + ".skeleton";
 			skeleton.myBoneAmount = mesh->mNumBones;
 
-			skeleton.myRootBone.myId = 0;
-			skeleton.myRootBone.myName = mesh->mBones[0]->mNode->mParent->mName.C_Str();
-			skeleton.myRootBone.myInverseBindTransform = DirectX::XMMatrixIdentity();
-			skeleton.myRootBone.myAnimatedTransform = DirectX::XMMatrixIdentity();
-			skeleton.myRootBone.myResultTranform = DirectX::XMMatrixIdentity();
-
-			std::vector<std::string> validNames;
-			for (int i = 0; i < mesh->mNumBones; i++)
+			for (int i = 0; i < skeleton.myBoneAmount; i++)
 			{
-				validNames.push_back(mesh->mBones[i]->mName.C_Str());
+				aiBone* boneData = mesh->mBones[i];
+
+				Bone bone;
+				bone.myId = i;
+				bone.myName = boneData->mName.C_Str();
+				bone.myFinalTransformation = DirectX::XMMatrixIdentity();
+				aiMatrix4x4 t = boneData->mOffsetMatrix;
+				bone.myOffsetMatrix = DirectX::XMMatrixSet(
+					t.a1, t.a2, t.a3, t.a4,
+					t.b1, t.b2, t.b3, t.b4,
+					t.c1, t.c2, t.c3, t.c4,
+					t.d1, t.d2, t.d3, t.d4);
+
+				skeleton.myBoneNameToIndexMap.insert({ bone.myName, bone.myId });
+				skeleton.myBones.push_back(bone);
 			}
 
-			CreateBoneHierarchy(mesh->mBones[0]->mNode->mParent, skeleton.myRootBone, validNames);
-			modelData.mySkeleton = skeleton;
+			ReadBoneHierarchy(data->mRootNode, DirectX::XMMatrixIdentity(), skeleton);
 
 			// Vertex bone ids & weight data
 			for (int bone_i = 0; bone_i < mesh->mNumBones; bone_i++)
@@ -97,9 +112,9 @@ void ModelAssetHandler::LoadModel(std::string aModelFileName)
 					{
 						unsigned int currentBoneValue = vertex.myBoneIDs[i];
 
-						if (currentBoneValue == 0)
+						if (currentBoneValue == -1)
 						{
-							vertex.myBoneIDs[i] = bone_i + 1;
+							vertex.myBoneIDs[i] = bone_i;
 							vertex.myBoneWeights[i] = weight.mWeight;
 							break;
 						}
@@ -107,13 +122,17 @@ void ModelAssetHandler::LoadModel(std::string aModelFileName)
 				}
 			}
 		}
+		else
+		{
+			modelData.myHasSkeleton = false;
+		}
 	}
 
 	// Create Input Layout
 	std::vector<D3D11_INPUT_ELEMENT_DESC> inputLayout = {
 		{ "POSITION", 0,DXGI_FORMAT_R32G32B32A32_FLOAT,0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0 },
 		{ "TEXCOORD", 0,DXGI_FORMAT_R32G32_FLOAT,0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0 },
-		{ "BONEIDS" , 0,DXGI_FORMAT_R32G32B32A32_UINT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{ "BONEIDS" , 0,DXGI_FORMAT_R32G32B32A32_SINT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
 		{ "BONEWEIGHTS", 0,DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
 		};
 
@@ -126,36 +145,173 @@ void ModelAssetHandler::LoadModel(std::string aModelFileName)
 	myLoadedModels.insert({ aModelFileName, modelData });
 }
 
-int ModelAssetHandler::currentBoneIndex = 1;
-
-void ModelAssetHandler::CreateBoneHierarchy(aiNode* aNode, Bone& aBone, std::vector<std::string> aValidNames)
+void ModelAssetHandler::ReadBoneHierarchy(aiNode* aNode, DirectX::XMMATRIX aParentTransform, Skeleton& aSkeleton)
 {
+	std::string nodeName = aNode->mName.C_Str();
+
+	aiMatrix4x4 t = aNode->mTransformation;
+	DirectX::XMMATRIX nodeTransform = DirectX::XMMatrixSet(
+			t.a1, t.a2, t.a3, t.a4,
+			t.b1, t.b2, t.b3, t.b4,
+			t.c1, t.c2, t.c3, t.c4,
+			t.d1, t.d2, t.d3, t.d4);
+
+	DirectX::XMMATRIX globalTransformation = aParentTransform * nodeTransform;
+
+	std::unordered_map<std::string, int>& boneNameToIndexMap = aSkeleton.myBoneNameToIndexMap;
+	if (boneNameToIndexMap.find(nodeName) != boneNameToIndexMap.end())
+	{
+		int boneIndex = boneNameToIndexMap.at(nodeName);
+
+		Bone& bone = aSkeleton.myBones[boneIndex];
+		DirectX::XMMATRIX test = globalTransformation * bone.myOffsetMatrix;
+		bone.myFinalTransformation = globalTransformation * bone.myOffsetMatrix;
+	}
+
 	for (int i = 0; i < aNode->mNumChildren; i++)
 	{
-		aiNode* child = aNode->mChildren[i];
+		ReadBoneHierarchy(aNode->mChildren[i], globalTransformation, aSkeleton);
+	}
+}
 
-		if (std::find(aValidNames.begin(), aValidNames.end(), child->mName.C_Str()) != aValidNames.end())
+void ModelAssetHandler::SetAnim(Animation aAnimation, Skeleton* aSkeleton, std::string aModelName)
+{
+	myModelName = aModelName;
+	myCurrentAnim = aAnimation;
+	mySkeleton = aSkeleton;
+	inited = true;
+}
+
+void ModelAssetHandler::Update()
+{
+	myTimer += Timer::GetInstance().GetDeltaTime() * 10;
+
+	UpdateTransform(myData->mRootNode, DirectX::XMMatrixIdentity(), *mySkeleton);
+
+	if (myTimer > myCurrentAnim.myLength)
+	{
+		myTimer = 0;
+		myCurrentFrame = 0;
+	}
+	else
+	{
+		if (myTimer > myCurrentAnim.myKeyFrames[myCurrentFrame + 1].myTimeStamp)
 		{
-			Bone bone;
-			bone.myName = child->mName.C_Str();
-			bone.myId = currentBoneIndex;
-			currentBoneIndex++;
+			myCurrentFrame++;
+		}
+	}
 
-			aiMatrix4x4 t = child->mTransformation.Inverse();
-			bone.myInverseBindTransform = DirectX::XMMatrixSet(
-				t.a1, t.a2, t.a3, t.a4,
-				t.b1, t.b2, t.b3, t.b4,
-				t.c1, t.c2, t.c3, t.c4,
-				t.d1, t.d2, t.d3, t.d4);
+	//LOG(std::to_string(myCurrentFrame));
+}
 
-			aBone.myChildren.push_back(bone);
-			CreateBoneHierarchy(child, aBone.myChildren[i], aValidNames);
+void ModelAssetHandler::UpdateTransform(aiNode* aNode, DirectX::XMMATRIX aParentTransform, Skeleton& aSkeleton)
+{
+	std::string nodeName = aNode->mName.C_Str();
 
-			continue;
+	std::unordered_map<std::string, int>& boneNameToIndexMap = aSkeleton.myBoneNameToIndexMap;
+	aiMatrix4x4 t = aNode->mTransformation;
+	DirectX::XMMATRIX nodeTransform = DirectX::XMMatrixSet(
+		t.a1, t.a2, t.a3, t.a4,
+		t.b1, t.b2, t.b3, t.b4,
+		t.c1, t.c2, t.c3, t.c4,
+		t.d1, t.d2, t.d3, t.d4);
+
+	if (myCurrentAnim.myKeyFrames[myCurrentFrame].myPose.find(nodeName) != myCurrentAnim.myKeyFrames[myCurrentFrame].myPose.end())
+	{
+		math::vector3<float> position = myCurrentAnim.myKeyFrames[myCurrentFrame].myPose.at(nodeName).myPosition;
+		math::vector4<float> quaternion = myCurrentAnim.myKeyFrames[myCurrentFrame].myPose.at(nodeName).myQuaternion;
+		math::vector3<float> scale = myCurrentAnim.myKeyFrames[myCurrentFrame].myPose.at(nodeName).myScale;
+		DirectX::XMMATRIX result =
+			DirectX::XMMatrixTranspose(
+			DirectX::XMMatrixScaling(scale.x, scale.y, scale.z) *
+			DirectX::XMMatrixRotationQuaternion(DirectX::XMVectorSet(quaternion.x, quaternion.y, quaternion.z, quaternion.w)) *
+			DirectX::XMMatrixTranslation(position.x, position.y, position.z)
+			);
+		nodeTransform = result;
+
+		std::string log = nodeName + "[" + std::to_string(quaternion.x) + "]" + " [" + std::to_string(quaternion.y) + "] [" + std::to_string(quaternion.z) + "]";
+		LOG(log);
+	}
+
+	DirectX::XMMATRIX globalTransformation = aParentTransform * nodeTransform;
+
+	if (boneNameToIndexMap.find(nodeName) != boneNameToIndexMap.end())
+	{
+		int boneIndex = boneNameToIndexMap.at(nodeName);
+
+		Bone& bone = aSkeleton.myBones[boneIndex];
+		DirectX::XMMATRIX test = globalTransformation * bone.myOffsetMatrix;
+		bone.myFinalTransformation = DirectX::XMMatrixTranspose(globalTransformation * bone.myOffsetMatrix);
+	}
+
+	for (int i = 0; i < aNode->mNumChildren; i++)
+	{
+		UpdateTransform(aNode->mChildren[i], globalTransformation, aSkeleton);
+	}
+}
+
+void ModelAssetHandler::LoadAnimation(std::string aAnimationFileName)
+{
+	// Check if it's already loaded
+	if (myLoadedAnimations.find(aAnimationFileName) != myLoadedAnimations.end())
+	{
+		LOG_WARNING("Animation has already been loaded.");
+		Assert(false);
+		return;
+	}
+
+	// Load file
+	Assimp::Importer importer;
+	auto loadedData = importer.ReadFile("Animations/" + aAnimationFileName, 0);
+	if (!loadedData)
+	{
+		LOG_ERROR("Failed to load animation '" + aAnimationFileName + "'");
+		Assert(false);
+	}
+
+	Animation anim;
+	anim.myLength = loadedData->mAnimations[0]->mDuration;
+
+	aiAnimation* currentAnim = loadedData->mAnimations[0];
+	int currentFrame = 0;
+	int lastFrame = loadedData->mAnimations[0]->mChannels[0]->mNumPositionKeys;
+
+	while (currentFrame < lastFrame)
+	{
+		KeyFrame newFrame;
+		newFrame.myTimeStamp = currentAnim->mChannels[0]->mPositionKeys[currentFrame].mTime;
+
+		for (int chnlIndex = 0; chnlIndex < currentAnim->mNumChannels; chnlIndex++)
+		{
+			aiNodeAnim* channel = currentAnim->mChannels[chnlIndex];
+
+			Transform pose;
+			pose.myPosition.x = channel->mPositionKeys[currentFrame].mValue.x;
+			pose.myPosition.y = channel->mPositionKeys[currentFrame].mValue.y;
+			pose.myPosition.z = channel->mPositionKeys[currentFrame].mValue.z;
+
+			pose.myQuaternion.x = channel->mRotationKeys[currentFrame].mValue.x;
+			pose.myQuaternion.y = channel->mRotationKeys[currentFrame].mValue.y;
+			pose.myQuaternion.z = channel->mRotationKeys[currentFrame].mValue.z;
+			pose.myQuaternion.w = channel->mRotationKeys[currentFrame].mValue.w;
+
+			pose.myRotation.x = channel->mRotationKeys[currentFrame].mValue.x;
+			pose.myRotation.y = channel->mRotationKeys[currentFrame].mValue.y;
+			pose.myRotation.z = channel->mRotationKeys[currentFrame].mValue.z;
+
+			pose.myScale.x = channel->mScalingKeys[currentFrame].mValue.x;
+			pose.myScale.y = channel->mScalingKeys[currentFrame].mValue.y;
+			pose.myScale.z = channel->mScalingKeys[currentFrame].mValue.z;
+
+			newFrame.myPose.insert({ channel->mNodeName.C_Str(), pose });
 		}
 
-		CreateBoneHierarchy(child, aBone, aValidNames);
+		anim.myKeyFrames.push_back(newFrame);
+		currentFrame++;
 	}
+
+	// Add to loaded model list
+	myLoadedAnimations.insert({ aAnimationFileName, anim });
 }
 
 void ModelAssetHandler::LoadTexture(std::string aTextureFileName)
@@ -187,6 +343,17 @@ ModelData& ModelAssetHandler::GetModelData(std::string aModelFileName)
 	return myLoadedModels.at(aModelFileName);
 }
 
+Animation& ModelAssetHandler::GetAnimation(std::string aAnimationFileName)
+{
+	if (myLoadedAnimations.find(aAnimationFileName) == myLoadedAnimations.end())
+	{
+		LOG_ERROR("Animation not found.");
+		Assert(false);
+	}
+
+	return myLoadedAnimations.at(aAnimationFileName);
+}
+
 TextureData& ModelAssetHandler::GetTextureData(std::string aTextureFileName)
 {
 	if (myLoadedTextures.find(aTextureFileName) == myLoadedTextures.end())
@@ -197,3 +364,4 @@ TextureData& ModelAssetHandler::GetTextureData(std::string aTextureFileName)
 
 	return myLoadedTextures.at(aTextureFileName);
 }
+

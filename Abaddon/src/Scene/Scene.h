@@ -26,4 +26,5 @@ private:
 	std::shared_ptr<Renderer> myRenderer;
 	std::shared_ptr<Camera> myCamera;
 	entt::registry myRegistry;
+	std::string MODELMODEL = "gremlin.fbx";
 };

@@ -26,13 +26,15 @@ void Scene::Init()
 	myCamera = std::make_shared<Camera>();
 	myCamera->Init(3.0f, 0.005f);
 
-	ModelAssetHandler::LoadModel("pyramid.fbx");
-	ModelAssetHandler::LoadTexture("grid.jpg");
+	ModelAssetHandler::LoadModel(MODELMODEL);
+	ModelAssetHandler::LoadAnimation(MODELMODEL);
+	ModelAssetHandler::LoadTexture("gremlin.jpg");
 
 	Entity obj = CreateEntity();
-	obj.GetComponent<ModelComponent>().myModelName = "pyramid.fbx";
-	obj.GetComponent<ModelComponent>().myTextureName = "grid.jpg";
-	obj.GetComponent<TransformComponent>().myTransform.myPosition = { 0.0f,0.0f,300.0f };
+	obj.GetComponent<ModelComponent>().myModelName = MODELMODEL;
+	obj.GetComponent<ModelComponent>().myTextureName = "gremlin.jpg";
+	obj.GetComponent<TransformComponent>().myTransform.myPosition = { 0.0f,0.0f,100.0f };
+	//obj.GetComponent<TransformComponent>().myTransform.myScale = { 10.0f,10.0f,10.0f };
 }
 
 void Scene::Update()
@@ -46,8 +48,15 @@ void Scene::Update()
 
 		ModelData& modelData = ModelAssetHandler::GetModelData(std::get<1>(object).myModelName);
 		TextureData& textureData = ModelAssetHandler::GetTextureData(std::get<1>(object).myTextureName);
+		
+		if (!ModelAssetHandler::inited)
+		{
+			ModelAssetHandler::SetAnim(ModelAssetHandler::GetAnimation(MODELMODEL), &modelData.mySkeleton, MODELMODEL);
+		}
+
 		myRenderer->Render(modelData, textureData, std::get<0>(object).myTransform, myCamera);
 	}
+	ModelAssetHandler::Update();
 
 	myRegistry.view<ScriptComponent>().each([=](entt::entity aEntity, ScriptComponent& aScriptComponent)
 		{

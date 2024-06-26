@@ -5,27 +5,44 @@
 #include "CBuffer.hpp"
 #include "SRV.h"
 #include "Sampler.h"
+#include "Graphics/Animation/AnimationDefines.h"
 
 #include <DirectXMath.h>
+#include <unordered_map>
 
 struct Bone
 {
 	int myId;
 	std::string myName;
 
-	std::vector<Bone> myChildren;
-
-	DirectX::XMMATRIX myAnimatedTransform;
-	DirectX::XMMATRIX myResultTranform;
-	DirectX::XMMATRIX myInverseBindTransform;
+	DirectX::XMMATRIX myOffsetMatrix;
+	DirectX::XMMATRIX myFinalTransformation;
 };
 
 struct Skeleton
 {
 	std::string myName;
 
-	Bone myRootBone;
+	std::unordered_map<std::string, int> myBoneNameToIndexMap;
+	std::vector<Bone> myBones;
 	int myBoneAmount;
+
+	DirectX::XMMATRIX* GetBoneTransforms()
+	{
+		DirectX::XMMATRIX boneTransforms[MAX_BONES];
+
+		for (int i = 0; i < 128; i++)
+		{
+			boneTransforms[i] = DirectX::XMMatrixIdentity();
+		}
+
+		for (int i = 0; i < myBoneAmount; i++)
+		{
+			boneTransforms[i] = myBones[i].myFinalTransformation;
+		}
+
+		return boneTransforms;
+	}
 };
 
 struct ModelData
@@ -34,6 +51,7 @@ struct ModelData
 	IndexBuffer myIndexBuffer;
 	InputLayout myInputLayout;
 
+	bool myHasSkeleton;
 	Skeleton mySkeleton;
 };
 

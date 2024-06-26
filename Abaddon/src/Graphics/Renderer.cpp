@@ -33,18 +33,18 @@ void Renderer::Render(ModelData& aModelData, TextureData& aTextureData, Transfor
 			DirectX::XMMatrixScaling(aTransform.myScale.x, aTransform.myScale.y, aTransform.myScale.z);
 
 	myCBufferTransform.myData.myViewMatrix = aCamera->GetMatrix();
-	myCBufferTransform.myData.myProjectionMatrix = DirectX::XMMatrixPerspectiveFovLH(1.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
+	myCBufferTransform.myData.myProjectionMatrix = DirectX::XMMatrixPerspectiveFovLH(1.0f, 16.0f / 9.0f, 0.1f, 10000.0f);
+	memcpy_s(&myCBufferTransform.myData.myBoneTransforms[0], sizeof(DirectX::XMMATRIX) * MAX_BONES, aModelData.mySkeleton.GetBoneTransforms(), sizeof(DirectX::XMMATRIX) * MAX_BONES);
 
 	myCBufferTransform.ApplyChanges();
 	myCBufferTransform.Bind();
 
 	// Debug Mode buffer
 	myResetBoneId = false;
-	if (myCBufferDebug.myData.myBoneId == aModelData.mySkeleton.myBoneAmount)
+	if (myCBufferDebug.myData.myBoneId == aModelData.mySkeleton.myBoneAmount - 1)
 		myResetBoneId = true;
 	myCBufferDebug.ApplyChanges();
 	myCBufferDebug.Bind(1);
-	LOG(std::to_string(myCBufferDebug.myData.myBoneId));
 
 	// Draw textured model
 	DX11::ourContext->DrawIndexed(aModelData.myIndexBuffer.GetIndexAmount(), 0, 0);

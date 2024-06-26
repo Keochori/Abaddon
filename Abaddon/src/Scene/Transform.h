@@ -1,5 +1,6 @@
 #pragma once
 #include "Math/vector3.hpp"
+#include "Math/vector4.hpp"
 
 struct Transform
 {
@@ -12,5 +13,6 @@ struct Transform
 
 	math::vector3<float> myPosition;
 	math::vector3<float> myRotation;
+	math::vector4<float> myQuaternion;
 	math::vector3<float> myScale;
 };

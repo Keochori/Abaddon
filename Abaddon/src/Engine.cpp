@@ -100,7 +100,7 @@ void Engine::UpdateDebugModeInput()
 		if (myDebugMode != eDebugMode::Wireframe)
 			DX11::ToggleWireframeRS(false);
 
-		myBoneId = 1;
+		myBoneId = 0;
 		myRenderer->ChangeBoneId(myBoneId);
 		myRenderer->ChangeDebugMode((int)myDebugMode);
 	}
@@ -110,7 +110,7 @@ void Engine::UpdateDebugModeInput()
 		if (Input::GetInstance().IsKeyPressed((int)eKeys::SPACE))
 		{
 			if (myRenderer->ResetBoneId())
-				myBoneId = 0;
+				myBoneId = -1;
 			myBoneId++;
 			myRenderer->ChangeBoneId(myBoneId);
 		}
